@@ -10,389 +10,976 @@
   <title>攝影器材管理系統</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Tailwind CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- html5-qrcode -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-
-  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Noto Sans TC"', 'sans-serif'] },
-          colors: {
-            bg:      '#1a1a1a',
-            surface: '#242424',
-            card:    '#2e2e2e',
-            border:  '#3a3a3a',
-            muted:   '#6b6b6b',
-            subtle:  '#888888',
-            text:    '#e8e8e8',
-            accent:  '#f0a500',
-            accent2: '#3b82f6',
-            danger:  '#ef4444',
-            success: '#22c55e',
-            warn:    '#f59e0b',
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
-    * { -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Noto Sans TC', sans-serif; background: #1a1a1a; color: #e8e8e8; overscroll-behavior: none; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .nav-btn.active .nav-icon { color: #f0a500; }
-    .nav-btn.active .nav-label { color: #f0a500; }
-    .scanner-box { border: 2px solid #f0a500; border-radius: 12px; }
-    #qr-reader video { border-radius: 10px !important; }
-    #qr-reader2 video { border-radius: 10px !important; }
-    #qr-reader3 video { border-radius: 10px !important; }
-    .modal-backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
-    .btn-primary { background: #f0a500; color: #1a1a1a; font-weight: 600; border-radius: 14px; padding: 14px 24px; font-size: 15px; transition: all .15s; active:opacity-80; }
-    .btn-ghost { background: #2e2e2e; color: #e8e8e8; border-radius: 14px; padding: 12px 20px; font-size: 14px; transition: all .15s; }
-    .input-field { background: #2e2e2e; border: 1.5px solid #3a3a3a; border-radius: 12px; padding: 12px 16px; color: #e8e8e8; font-size: 15px; width: 100%; outline: none; font-family: 'Noto Sans TC', sans-serif; }
-    .input-field:focus { border-color: #f0a500; }
-    select.input-field option { background: #2e2e2e; color: #e8e8e8; }
-    .card { background: #2e2e2e; border-radius: 16px; padding: 16px; }
-    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-    .chip-green { background: rgba(34,197,94,.15); color: #22c55e; }
-    .chip-red { background: rgba(239,68,68,.15); color: #ef4444; }
-    .chip-yellow { background: rgba(245,158,11,.15); color: #f59e0b; }
-    .chip-blue { background: rgba(59,130,246,.15); color: #3b82f6; }
-    .chip-gray { background: rgba(107,107,107,.15); color: #888; }
-    .bottom-nav { background: #1e1e1e; border-top: 1px solid #2e2e2e; padding-bottom: env(safe-area-inset-bottom); }
-    .scroll-area { height: calc(100dvh - 56px - 80px); overflow-y: auto; padding: 16px 16px 8px; -webkit-overflow-scrolling: touch; }
-    .scroll-area::-webkit-scrollbar { display: none; }
-    .topbar { height: 56px; background: #1a1a1a; border-bottom: 1px solid #2e2e2e; padding: 0 16px; display: flex; align-items: center; }
-    .fab { position: fixed; bottom: 96px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #f0a500; color: #1a1a1a; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(240,165,0,.4); font-size: 24px; z-index: 40; }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .slide-up { animation: slideUp .25s ease; }
-    @keyframes pulse-ring { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
-    .scanning-ring { animation: pulse-ring 1.2s infinite; }
-    .calendar-day { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
-    .calendar-day.rented { background: rgba(240,165,0,.2); color: #f0a500; font-weight: 600; }
-    .calendar-day.today { border: 1.5px solid #f0a500; }
-    .toaster { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-    .toast { background: #2e2e2e; color: #e8e8e8; padding: 10px 18px; border-radius: 12px; font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.4); border-left: 3px solid #f0a500; white-space: nowrap; }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{margin:0;font-family:'Noto Sans TC',sans-serif;background:#1a1a1a;color:#e8e8e8;overscroll-behavior:none;}
+
+    /* ── Layout ── */
+    .topbar{position:fixed;top:0;left:0;right:0;height:56px;background:#1a1a1a;border-bottom:1px solid #2e2e2e;display:flex;align-items:center;padding:0 16px;z-index:100;}
+    .scroll-area{position:fixed;top:56px;bottom:72px;left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;}
+    .scroll-area::-webkit-scrollbar{display:none;}
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#1e1e1e;border-top:1px solid #2e2e2e;padding-bottom:env(safe-area-inset-bottom);z-index:100;display:flex;}
+
+    /* ── Tab ── */
+    .tab-pane{display:none;}
+    .tab-pane.active{display:block;}
+    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;background:none;border:none;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+    .nav-btn .ni{font-size:20px;line-height:1;}
+    .nav-btn .nl{font-size:10px;color:#666;font-weight:500;transition:color .15s;}
+    .nav-btn.active .nl{color:#f0a500;}
+
+    /* ── Buttons ── */
+    .btn{display:block;width:100%;padding:13px 16px;border:none;border-radius:14px;font-size:15px;font-weight:600;font-family:'Noto Sans TC',sans-serif;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:center;transition:opacity .12s;}
+    .btn:active{opacity:.75;}
+    .btn-gold{background:#f0a500;color:#1a1a1a;}
+    .btn-dark{background:#2e2e2e;color:#e8e8e8;}
+    .btn-sm{padding:8px 14px;font-size:13px;border-radius:10px;width:auto;}
+
+    /* ── Inputs ── */
+    .inp{display:block;width:100%;padding:12px 14px;background:#2e2e2e;border:1.5px solid #3a3a3a;border-radius:12px;color:#e8e8e8;font-size:15px;font-family:'Noto Sans TC',sans-serif;outline:none;-webkit-appearance:none;appearance:none;}
+    .inp:focus{border-color:#f0a500;}
+    select.inp option{background:#2e2e2e;}
+    textarea.inp{resize:none;}
+
+    /* ── Cards ── */
+    .card{background:#2e2e2e;border-radius:16px;padding:16px;margin-bottom:12px;}
+
+    /* ── Chips ── */
+    .chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
+    .c-green{background:rgba(34,197,94,.15);color:#22c55e;}
+    .c-red{background:rgba(239,68,68,.15);color:#ef4444;}
+    .c-yellow{background:rgba(245,158,11,.15);color:#f59e0b;}
+    .c-blue{background:rgba(59,130,246,.15);color:#3b82f6;}
+    .c-gray{background:rgba(120,120,120,.15);color:#888;}
+
+    /* ── Modal ── */
+    .modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:none;align-items:flex-end;}
+    .modal.open{display:flex;}
+    .sheet{background:#242424;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:88dvh;overflow-y:auto;}
+    .handle{width:40px;height:4px;background:#3a3a3a;border-radius:2px;margin:0 auto 18px;}
+
+    /* ── Toast ── */
+    #toaster{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;white-space:nowrap;}
+    .toast{background:#2e2e2e;color:#e8e8e8;padding:9px 16px;border-radius:12px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.5);border-left:3px solid #f0a500;animation:tin .2s ease;}
+    @keyframes tin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+
+    /* ── Scanner ── */
+    .scan-box{border:2px solid #f0a500;border-radius:12px;overflow:hidden;display:none;}
+
+    /* ── Calendar ── */
+    .cal-day{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;margin:0 auto;cursor:pointer;}
+    .cal-day.rented{background:rgba(240,165,0,.2);color:#f0a500;font-weight:700;}
+    .cal-day.today{outline:2px solid #f0a500;outline-offset:1px;}
+
+    /* ── Row helper ── */
+    .row{display:flex;gap:10px;}
+    .row>.btn{flex:1;}
+
+    /* ── Stat box ── */
+    .sbox{flex:1;background:#1a1a1a;border-radius:10px;padding:8px;text-align:center;}
+    .sbox .sv{font-size:16px;font-weight:700;}
+    .sbox .sl{font-size:10px;color:#888;margin-top:2px;}
+
+    label.lbl{display:block;font-size:12px;color:#888;margin-bottom:5px;}
+    .gap{margin-bottom:12px;}
   </style>
 </head>
-<body class="min-h-dvh overflow-hidden">
+<body>
 
-<!-- Toaster -->
-<div class="toaster" id="toaster"></div>
+<!-- Toast -->
+<div id="toaster"></div>
 
-<!-- ─── TOP BAR ─── -->
-<div class="topbar sticky top-0 z-30">
-  <span class="text-accent font-bold text-lg tracking-wide">📷 器材管理</span>
-  <div class="ml-auto flex gap-2">
-    <button onclick="openSettings()" class="w-9 h-9 rounded-full flex items-center justify-center text-subtle hover:text-text hover:bg-card transition">⚙️</button>
-  </div>
+<!-- ══ TOP BAR ══ -->
+<div class="topbar">
+  <span style="color:#f0a500;font-weight:700;font-size:17px">📷 器材管理</span>
+  <button id="btnSettings" style="margin-left:auto;width:40px;height:40px;border-radius:50%;background:#2e2e2e;border:none;cursor:pointer;font-size:18px;color:#e8e8e8;display:flex;align-items:center;justify-content:center;">⚙️</button>
 </div>
 
-<!-- ─── TAB CONTENTS ─── -->
-<div class="scroll-area" id="mainScroll">
+<!-- ══ CONTENT ══ -->
+<div class="scroll-area">
 
-  <!-- TAB 1: 今日出庫 -->
-  <div id="tab-checkout" class="tab-content active">
-    <div class="mb-4">
-      <h2 class="text-text font-semibold text-base mb-3">出庫資訊</h2>
-      <div class="flex flex-col gap-3">
-        <div>
-          <label class="text-subtle text-xs mb-1 block">使用者</label>
-          <div class="flex gap-2">
-            <select id="checkoutUser" class="input-field flex-1">
-              <option value="">選擇使用者</option>
-              <option>崇瑋</option><option>得生</option><option>純穎</option>
-              <option>哲嘉</option><option>子禎</option><option>錢琦</option>
-              <option>致瑋</option><option>家暉</option><option>冠智</option>
-            </select>
-            <button onclick="openAddUserModal()" class="btn-ghost px-3 text-xl">＋</button>
-          </div>
-        </div>
-        <div>
-          <label class="text-subtle text-xs mb-1 block">出租日期</label>
-          <input type="date" id="checkoutDate" class="input-field" />
-        </div>
-        <div>
-          <label class="text-subtle text-xs mb-1 block">單號</label>
-          <input type="text" id="checkoutOrderNo" placeholder="輸入單號" class="input-field" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Scanner -->
-    <div class="card mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-text font-medium text-sm">掃描器材 QR Code</span>
-        <button id="toggleScan1" onclick="toggleScanner('qr-reader', 'toggleScan1', handleCheckoutScan)" class="btn-primary text-sm px-4 py-2">開始掃描</button>
-      </div>
-      <div id="qr-reader" class="scanner-box overflow-hidden" style="display:none"></div>
-    </div>
-
-    <!-- Item List -->
-    <div class="mb-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-text font-medium text-sm">出庫品項</span>
-        <span id="checkoutCount" class="chip chip-gray">0 件</span>
-      </div>
-      <div id="checkoutItems" class="flex flex-col gap-2"></div>
-    </div>
-
-    <!-- Actions -->
-    <div class="flex gap-3 pb-4">
-      <button onclick="saveCheckout()" class="btn-primary flex-1">💾 儲存出庫</button>
-      <button onclick="exportCheckoutPDF()" class="btn-ghost flex-1">📄 PDF / 分享</button>
-    </div>
-  </div>
-
-  <!-- TAB 2: 器材列表 -->
-  <div id="tab-list" class="tab-content">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-text font-semibold text-base">所有器材</h2>
-      <button onclick="loadEquipmentList()" class="text-accent text-sm">重新整理</button>
-    </div>
-    <input type="text" id="searchEquip" placeholder="搜尋器材名稱…" class="input-field mb-4" oninput="filterEquipment()" />
-    <div id="equipmentList" class="flex flex-col gap-3"></div>
-  </div>
-
-  <!-- TAB 3: 器材狀態表 -->
-  <div id="tab-status" class="tab-content">
-    <h2 class="text-text font-semibold text-base mb-4">器材狀態回報</h2>
-    <div class="card mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-text font-medium text-sm">掃描器材 QR Code</span>
-        <button id="toggleScan2" onclick="toggleScanner('qr-reader2', 'toggleScan2', handleStatusScan)" class="btn-primary text-sm px-4 py-2">開始掃描</button>
-      </div>
-      <div id="qr-reader2" class="scanner-box overflow-hidden" style="display:none"></div>
-    </div>
-    <div class="flex flex-col gap-3">
-      <div>
-        <label class="text-subtle text-xs mb-1 block">器材名稱</label>
-        <input type="text" id="statusEquipName" class="input-field" placeholder="掃描後自動填入" readonly />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">編號</label>
-        <input type="text" id="statusEquipNo" class="input-field" placeholder="掃描後自動填入" readonly />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">填寫人</label>
-        <select id="statusUser" class="input-field">
-          <option value="">選擇填寫人</option>
+  <!-- TAB 1 今日出庫 -->
+  <div id="pane-checkout" class="tab-pane active">
+    <div class="card">
+      <label class="lbl">使用者</label>
+      <div class="row gap" style="align-items:center">
+        <select id="checkoutUser" class="inp" style="flex:1">
+          <option value="">選擇使用者</option>
           <option>崇瑋</option><option>得生</option><option>純穎</option>
           <option>哲嘉</option><option>子禎</option><option>錢琦</option>
           <option>致瑋</option><option>家暉</option><option>冠智</option>
         </select>
+        <button id="btnAddUser" class="btn btn-dark btn-sm" style="flex-shrink:0">＋ 新增</button>
       </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">處理狀態</label>
-        <select id="statusType" class="input-field" onchange="onStatusTypeChange()">
-          <option value="normal">正常</option>
-          <option value="pending">未處理</option>
-          <option value="repair">送修</option>
-        </select>
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">日期</label>
-        <input type="date" id="statusDate" class="input-field" />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">備註</label>
-        <textarea id="statusNote" class="input-field" rows="3" placeholder="填寫備註說明…" style="resize:none"></textarea>
-      </div>
-      <button onclick="saveStatus()" class="btn-primary w-full">💾 儲存狀態</button>
+      <label class="lbl">出租日期</label>
+      <input type="date" id="checkoutDate" class="inp gap" />
+      <label class="lbl">單號</label>
+      <input type="text" id="checkoutOrderNo" class="inp" placeholder="輸入單號（選填）" />
     </div>
-    <div class="mt-5">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-text font-medium text-sm">近期狀態記錄</span>
-        <button onclick="loadStatusLog()" class="text-accent text-sm">重新整理</button>
+
+    <div class="card">
+      <div class="row" style="align-items:center;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:500;flex:1">掃描器材 QR Code</span>
+        <button id="btnScan1" class="btn btn-gold btn-sm">開始掃描</button>
       </div>
-      <div id="statusLogList" class="flex flex-col gap-2"></div>
+      <div id="qr1" class="scan-box"></div>
+    </div>
+
+    <div class="row" style="align-items:center;margin-bottom:8px">
+      <span style="font-size:14px;font-weight:500;flex:1">出庫品項</span>
+      <span id="checkoutCount" class="chip c-gray">0 件</span>
+    </div>
+    <div id="checkoutItems"></div>
+
+    <div class="row" style="margin-top:4px;padding-bottom:4px">
+      <button id="btnSaveCheckout" class="btn btn-gold">💾 儲存出庫</button>
+      <button id="btnExportPDF"    class="btn btn-dark">📄 PDF / 分享</button>
     </div>
   </div>
 
-  <!-- TAB 4: 盤點表 -->
-  <div id="tab-inventory" class="tab-content">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-text font-semibold text-base">盤點總表</h2>
-      <button onclick="loadInventory()" class="text-accent text-sm">重新整理</button>
+  <!-- TAB 2 器材列表 -->
+  <div id="pane-list" class="tab-pane">
+    <div class="row" style="align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:600;flex:1">所有器材</span>
+      <button id="btnRefreshList" style="background:none;border:none;color:#f0a500;font-size:13px;cursor:pointer">重新整理</button>
     </div>
-    <div class="card mb-4 flex gap-4 text-center">
-      <div class="flex-1">
-        <div class="text-2xl font-bold text-accent" id="invTotal">-</div>
-        <div class="text-subtle text-xs mt-1">總數量</div>
-      </div>
-      <div class="w-px bg-border"></div>
-      <div class="flex-1">
-        <div class="text-2xl font-bold text-success" id="invPresent">-</div>
-        <div class="text-subtle text-xs mt-1">在庫</div>
-      </div>
-      <div class="w-px bg-border"></div>
-      <div class="flex-1">
-        <div class="text-2xl font-bold text-warn" id="invOut">-</div>
-        <div class="text-subtle text-xs mt-1">出租中</div>
-      </div>
-      <div class="w-px bg-border"></div>
-      <div class="flex-1">
-        <div class="text-2xl font-bold text-danger" id="invRepair">-</div>
-        <div class="text-subtle text-xs mt-1">維修中</div>
-      </div>
-    </div>
-    <div id="inventoryList" class="flex flex-col gap-3"></div>
+    <input type="text" id="searchEquip" class="inp" style="margin-bottom:12px" placeholder="搜尋器材名稱…" />
+    <div id="equipmentList"></div>
   </div>
 
-  <!-- TAB 5: 入庫 -->
-  <div id="tab-inbound" class="tab-content">
-    <h2 class="text-text font-semibold text-base mb-4">器材入庫</h2>
-    <div class="card mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-text font-medium text-sm">掃描器材 QR Code</span>
-        <button id="toggleScan3" onclick="toggleScanner('qr-reader3', 'toggleScan3', handleInboundScan)" class="btn-primary text-sm px-4 py-2">開始掃描</button>
+  <!-- TAB 3 狀態表 -->
+  <div id="pane-status" class="tab-pane">
+    <p style="font-size:15px;font-weight:600;margin:0 0 12px">器材狀態回報</p>
+    <div class="card">
+      <div class="row" style="align-items:center;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:500;flex:1">掃描器材 QR Code</span>
+        <button id="btnScan2" class="btn btn-gold btn-sm">開始掃描</button>
       </div>
-      <div id="qr-reader3" class="scanner-box overflow-hidden" style="display:none"></div>
+      <div id="qr2" class="scan-box"></div>
     </div>
-    <div class="flex flex-col gap-3 mb-4">
-      <div>
-        <label class="text-subtle text-xs mb-1 block">器材名稱</label>
-        <input type="text" id="inboundName" class="input-field" placeholder="掃描後自動填入或手動輸入" />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">器材編號</label>
-        <input type="text" id="inboundCode" class="input-field" placeholder="如：A-001" />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">入庫數量</label>
-        <input type="number" id="inboundQty" class="input-field" placeholder="1" value="1" min="1" />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">備註</label>
-        <input type="text" id="inboundNote" class="input-field" placeholder="選填備註" />
-      </div>
+    <div class="card">
+      <label class="lbl">器材名稱</label>
+      <input id="statusName" class="inp gap" placeholder="掃描後自動填入" readonly />
+      <label class="lbl">編號</label>
+      <input id="statusCode" class="inp gap" placeholder="掃描後自動填入" readonly />
+      <label class="lbl">填寫人</label>
+      <select id="statusUser" class="inp gap">
+        <option value="">選擇填寫人</option>
+        <option>崇瑋</option><option>得生</option><option>純穎</option>
+        <option>哲嘉</option><option>子禎</option><option>錢琦</option>
+        <option>致瑋</option><option>家暉</option><option>冠智</option>
+      </select>
+      <label class="lbl">處理狀態</label>
+      <select id="statusType" class="inp gap">
+        <option value="normal">正常</option>
+        <option value="pending">未處理</option>
+        <option value="repair">送修</option>
+      </select>
+      <label class="lbl">日期</label>
+      <input type="date" id="statusDate" class="inp gap" />
+      <label class="lbl">備註</label>
+      <textarea id="statusNote" class="inp" rows="3" style="margin-bottom:12px" placeholder="填寫備註…"></textarea>
+      <button id="btnSaveStatus" class="btn btn-gold">💾 儲存狀態</button>
     </div>
-    <div class="mb-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-text font-medium text-sm">本次入庫品項</span>
-        <span id="inboundCount" class="chip chip-gray">0 件</span>
-      </div>
-      <div id="inboundItems" class="flex flex-col gap-2"></div>
+    <div class="row" style="align-items:center;margin-bottom:8px">
+      <span style="font-size:14px;font-weight:500;flex:1">近期記錄</span>
+      <button id="btnRefreshStatus" style="background:none;border:none;color:#f0a500;font-size:13px;cursor:pointer">重新整理</button>
     </div>
-    <button onclick="saveInbound()" class="btn-primary w-full">💾 儲存入庫</button>
+    <div id="statusLog"></div>
   </div>
 
-</div><!-- end scroll-area -->
+  <!-- TAB 4 盤點表 -->
+  <div id="pane-inventory" class="tab-pane">
+    <div class="row" style="align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:600;flex:1">盤點總表</span>
+      <button id="btnRefreshInv" style="background:none;border:none;color:#f0a500;font-size:13px;cursor:pointer">重新整理</button>
+    </div>
+    <div class="card row" style="text-align:center;margin-bottom:16px;gap:0">
+      <div style="flex:1"><div id="invTotal"   style="font-size:22px;font-weight:700">-</div><div style="font-size:10px;color:#888;margin-top:2px">總數</div></div>
+      <div style="width:1px;background:#3a3a3a"></div>
+      <div style="flex:1"><div id="invPresent" style="font-size:22px;font-weight:700;color:#22c55e">-</div><div style="font-size:10px;color:#888;margin-top:2px">在庫</div></div>
+      <div style="width:1px;background:#3a3a3a"></div>
+      <div style="flex:1"><div id="invOut"     style="font-size:22px;font-weight:700;color:#f59e0b">-</div><div style="font-size:10px;color:#888;margin-top:2px">出租中</div></div>
+      <div style="width:1px;background:#3a3a3a"></div>
+      <div style="flex:1"><div id="invRepair"  style="font-size:22px;font-weight:700;color:#ef4444">-</div><div style="font-size:10px;color:#888;margin-top:2px">維修</div></div>
+    </div>
+    <div id="inventoryList"></div>
+  </div>
 
-<!-- ─── BOTTOM NAV ─── -->
-<div class="bottom-nav fixed bottom-0 left-0 right-0 z-30">
-  <div class="flex">
-    <button class="nav-btn active flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('checkout', this)">
-      <span class="nav-icon text-xl">📤</span>
-      <span class="nav-label text-[10px] text-subtle font-medium">今日出庫</span>
-    </button>
-    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('list', this)">
-      <span class="nav-icon text-xl">📋</span>
-      <span class="nav-label text-[10px] text-subtle font-medium">器材列表</span>
-    </button>
-    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('status', this)">
-      <span class="nav-icon text-xl">🔧</span>
-      <span class="nav-label text-[10px] text-subtle font-medium">狀態表</span>
-    </button>
-    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('inventory', this)">
-      <span class="nav-icon text-xl">📊</span>
-      <span class="nav-label text-[10px] text-subtle font-medium">盤點表</span>
-    </button>
-    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('inbound', this)">
-      <span class="nav-icon text-xl">📥</span>
-      <span class="nav-label text-[10px] text-subtle font-medium">入庫</span>
-    </button>
+  <!-- TAB 5 入庫 -->
+  <div id="pane-inbound" class="tab-pane">
+    <p style="font-size:15px;font-weight:600;margin:0 0 12px">器材入庫</p>
+    <div class="card">
+      <div class="row" style="align-items:center;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:500;flex:1">掃描器材 QR Code</span>
+        <button id="btnScan3" class="btn btn-gold btn-sm">開始掃描</button>
+      </div>
+      <div id="qr3" class="scan-box"></div>
+    </div>
+    <div class="card">
+      <label class="lbl">器材名稱</label>
+      <input id="inboundName" class="inp gap" placeholder="掃描後自動填入或手動輸入" />
+      <label class="lbl">器材編號</label>
+      <input id="inboundCode" class="inp gap" placeholder="如：A-001" />
+      <label class="lbl">入庫數量</label>
+      <input type="number" id="inboundQty" class="inp gap" value="1" min="1" />
+      <label class="lbl">備註</label>
+      <input id="inboundNote" class="inp" placeholder="選填備註" />
+    </div>
+    <div class="row" style="align-items:center;margin-bottom:8px">
+      <span style="font-size:14px;font-weight:500;flex:1">本次入庫品項</span>
+      <span id="inboundCount" class="chip c-gray">0 件</span>
+    </div>
+    <div id="inboundItems" style="margin-bottom:12px"></div>
+    <button id="btnSaveInbound" class="btn btn-gold">💾 儲存入庫</button>
+  </div>
+
+</div><!-- /scroll-area -->
+
+<!-- ══ BOTTOM NAV ══ -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-tab="checkout"><span class="ni">📤</span><span class="nl">今日出庫</span></button>
+  <button class="nav-btn" data-tab="list">          <span class="ni">📋</span><span class="nl">器材列表</span></button>
+  <button class="nav-btn" data-tab="status">        <span class="ni">🔧</span><span class="nl">狀態表</span></button>
+  <button class="nav-btn" data-tab="inventory">     <span class="ni">📊</span><span class="nl">盤點表</span></button>
+  <button class="nav-btn" data-tab="inbound">       <span class="ni">📥</span><span class="nl">入庫</span></button>
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Settings -->
+<div id="modalSettings" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p style="font-size:16px;font-weight:600;margin:0 0 16px">⚙️ Supabase 設定</p>
+    <label class="lbl">Supabase URL</label>
+    <input id="sbUrl" class="inp gap" placeholder="https://xxxx.supabase.co" />
+    <label class="lbl">Supabase Anon Key</label>
+    <input id="sbKey" class="inp" style="margin-bottom:12px" placeholder="eyJ…" />
+    <button id="btnSaveSettings" class="btn btn-gold" style="margin-bottom:8px">儲存並連線</button>
+    <div id="dbStatus" style="text-align:center;font-size:13px;color:#888;min-height:20px;margin-bottom:10px"></div>
+    <div style="background:#2e2e2e;border-radius:12px;padding:12px;margin-bottom:12px">
+      <p style="margin:0;font-size:12px;color:#888;line-height:1.7">
+        ① 前往 <span style="color:#f0a500">supabase.com</span> 建立免費專案<br>
+        ② SQL Editor 執行 <span style="color:#f0a500">schema.sql</span><br>
+        ③ Settings → API 複製 URL 和 anon key
+      </p>
+    </div>
+    <button id="btnCloseSettings" class="btn btn-dark">關閉</button>
   </div>
 </div>
 
-<!-- ─── MODALS ─── -->
-
-<!-- Schedule Modal -->
-<div id="scheduleModal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-backdrop absolute inset-0" onclick="closeModal('scheduleModal')"></div>
-  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up" style="max-height:80dvh;overflow-y:auto">
-    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
-    <div class="flex items-center justify-between mb-4">
-      <button onclick="changeCalMonth(-1)" class="w-9 h-9 rounded-full bg-card flex items-center justify-center text-text">‹</button>
-      <span id="calTitle" class="text-text font-semibold"></span>
-      <button onclick="changeCalMonth(1)" class="w-9 h-9 rounded-full bg-card flex items-center justify-center text-text">›</button>
-    </div>
-    <div id="calGrid" class="grid grid-cols-7 gap-1 mb-4 text-center"></div>
-    <div id="scheduleDetail" class="mt-2"></div>
-    <button onclick="closeModal('scheduleModal')" class="btn-ghost w-full mt-4">關閉</button>
-  </div>
-</div>
-
-<!-- Add User Modal -->
-<div id="addUserModal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-backdrop absolute inset-0" onclick="closeModal('addUserModal')"></div>
-  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up">
-    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
-    <h3 class="text-text font-semibold mb-4">新增使用者</h3>
-    <input type="text" id="newUserName" class="input-field mb-4" placeholder="輸入姓名" />
-    <div class="flex gap-3">
-      <button onclick="closeModal('addUserModal')" class="btn-ghost flex-1">取消</button>
-      <button onclick="addNewUser()" class="btn-primary flex-1">新增</button>
-    </div>
-  </div>
-</div>
-
-<!-- Settings Modal -->
-<div id="settingsModal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-backdrop absolute inset-0" onclick="closeModal('settingsModal')"></div>
-  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up">
-    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
-    <h3 class="text-text font-semibold mb-4">⚙️ Supabase 設定</h3>
-    <div class="flex flex-col gap-3">
-      <div>
-        <label class="text-subtle text-xs mb-1 block">Supabase URL</label>
-        <input type="text" id="sbUrl" class="input-field" placeholder="https://xxxx.supabase.co" />
-      </div>
-      <div>
-        <label class="text-subtle text-xs mb-1 block">Supabase Anon Key</label>
-        <input type="text" id="sbKey" class="input-field" placeholder="eyJ..." />
-      </div>
-      <button onclick="saveSettings()" class="btn-primary w-full">儲存並連線</button>
-      <div id="dbStatus" class="text-center text-sm text-subtle"></div>
-    </div>
-    <div class="mt-4 p-3 bg-card rounded-xl">
-      <p class="text-subtle text-xs leading-5">請先至 <span class="text-accent">supabase.com</span> 建立專案，然後執行 <span class="text-accent">schema.sql</span> 建立資料表，再填入連線資訊。</p>
-    </div>
-    <button onclick="closeModal('settingsModal')" class="btn-ghost w-full mt-3">關閉</button>
-  </div>
-</div>
-
-<!-- Confirm Return Modal -->
-<div id="returnModal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-backdrop absolute inset-0"></div>
-  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up">
-    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
-    <h3 class="text-text font-semibold mb-2" id="returnModalTitle">確認歸還</h3>
-    <p class="text-subtle text-sm mb-4" id="returnModalMsg"></p>
-    <div class="flex gap-3">
-      <button onclick="closeModal('returnModal')" class="btn-ghost flex-1">取消</button>
-      <button onclick="confirmReturn()" class="btn-primary flex-1">確認歸還</button>
+<!-- Add User -->
+<div id="modalAddUser" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p style="font-size:16px;font-weight:600;margin:0 0 16px">新增使用者</p>
+    <input id="newUserName" class="inp" style="margin-bottom:16px" placeholder="輸入姓名" />
+    <div class="row">
+      <button id="btnCancelUser" class="btn btn-dark">取消</button>
+      <button id="btnConfirmUser" class="btn btn-gold">新增</button>
     </div>
   </div>
 </div>
 
-<script src="app.js"></script>
+<!-- Schedule (大表) -->
+<div id="modalSchedule" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="row" style="align-items:center;margin-bottom:16px">
+      <button id="btnCalPrev" style="width:36px;height:36px;border-radius:50%;background:#2e2e2e;border:none;color:#e8e8e8;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">‹</button>
+      <span id="calTitle" style="flex:1;text-align:center;font-size:15px;font-weight:600"></span>
+      <button id="btnCalNext" style="width:36px;height:36px;border-radius:50%;background:#2e2e2e;border:none;color:#e8e8e8;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+    <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:12px"></div>
+    <div id="calDetail" style="margin-bottom:12px"></div>
+    <button id="btnCloseSchedule" class="btn btn-dark">關閉</button>
+  </div>
+</div>
+
+<!-- Return -->
+<div id="modalReturn" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p id="returnTitle" style="font-size:16px;font-weight:600;margin:0 0 6px">確認歸還</p>
+    <p id="returnMsg"   style="font-size:13px;color:#888;margin:0 0 20px"></p>
+    <div class="row">
+      <button id="btnCancelReturn"  class="btn btn-dark">取消</button>
+      <button id="btnConfirmReturn" class="btn btn-gold">確認歸還</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ALL JAVASCRIPT — inlined, no external file
+     ══════════════════════════════════════════ -->
+<script>
+/* ── globals ── */
+let DB = null;           // supabase client
+let currentTab = 'checkout';
+let checkoutItems = [];
+let inboundItems  = [];
+let allEquipments = [];
+let returnTarget  = null;
+let calYear, calMonth, calEquipName, calEquipCode, calRentals = [];
+const scanners = {}, scanActive = {};
+
+/* ════════════════════════════════
+   BOOT — runs after DOM is ready
+   ════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', function () {
+  initSupabase();
+  loadExtraUsers();
+  setDefaultDates();
+  renderCheckoutItems();
+  renderInboundItems();
+  wireButtons();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+});
+
+/* ── default dates ── */
+function setDefaultDates() {
+  var t = todayStr();
+  document.getElementById('checkoutDate').value = t;
+  document.getElementById('statusDate').value    = t;
+}
+
+/* ════════════════════════════════
+   WIRE ALL BUTTONS HERE
+   (no inline onclick anywhere)
+   ════════════════════════════════ */
+function wireButtons() {
+  /* settings */
+  on('btnSettings',      openSettings);
+  on('btnSaveSettings',  saveSettings);
+  on('btnCloseSettings', function(){ closeModal('modalSettings'); });
+
+  /* add user */
+  on('btnAddUser',    function(){ openModal('modalAddUser'); });
+  on('btnConfirmUser',addNewUser);
+  on('btnCancelUser', function(){ closeModal('modalAddUser'); });
+
+  /* checkout tab */
+  on('btnScan1',        function(){ toggleScan('qr1','btnScan1', onCheckoutScan); });
+  on('btnSaveCheckout', saveCheckout);
+  on('btnExportPDF',    exportPDF);
+
+  /* status tab */
+  on('btnScan2',         function(){ toggleScan('qr2','btnScan2', onStatusScan); });
+  on('btnSaveStatus',    saveStatus);
+  on('btnRefreshStatus', loadStatusLog);
+  on('statusType',       function(){
+    if (document.getElementById('statusType').value === 'repair')
+      toast('⚠️ 送修將同步標記維修中','warn');
+  });
+
+  /* equipment list */
+  on('btnRefreshList', loadEquipList);
+  on('searchEquip',    filterEquip, 'input');
+
+  /* inventory */
+  on('btnRefreshInv', loadInventory);
+
+  /* inbound */
+  on('btnScan3',        function(){ toggleScan('qr3','btnScan3', onInboundScan); });
+  on('btnSaveInbound',  saveInbound);
+
+  /* calendar */
+  on('btnCalPrev',       function(){ changeCalMonth(-1); });
+  on('btnCalNext',       function(){ changeCalMonth(1); });
+  on('btnCloseSchedule', function(){ closeModal('modalSchedule'); });
+
+  /* return */
+  on('btnConfirmReturn', confirmReturn);
+  on('btnCancelReturn',  function(){ closeModal('modalReturn'); });
+
+  /* bottom nav */
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchTab(btn.dataset.tab, btn); });
+  });
+
+  /* click backdrop to close modals */
+  ['modalSettings','modalAddUser','modalSchedule','modalReturn'].forEach(function(id){
+    document.getElementById(id).addEventListener('click', function(e){
+      if (e.target === document.getElementById(id)) closeModal(id);
+    });
+  });
+}
+
+/* shorthand event binder */
+function on(id, fn, evt) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener(evt || 'click', fn);
+}
+
+/* ════════════════════════════════
+   MODAL helpers
+   ════════════════════════════════ */
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+/* ════════════════════════════════
+   TOAST
+   ════════════════════════════════ */
+function toast(msg, type) {
+  var el = document.createElement('div');
+  el.className = 'toast';
+  if (type === 'warn')    el.style.borderLeftColor = '#f59e0b';
+  if (type === 'error')   el.style.borderLeftColor = '#ef4444';
+  if (type === 'success') el.style.borderLeftColor = '#22c55e';
+  el.textContent = msg;
+  document.getElementById('toaster').appendChild(el);
+  setTimeout(function(){ el.remove(); }, 3000);
+}
+
+/* ════════════════════════════════
+   HELPERS
+   ════════════════════════════════ */
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate());
+}
+function p2(n){ return String(n).padStart(2,'0'); }
+function fmtDate(s){
+  if (!s) return '';
+  var d = new Date(s);
+  return d.getFullYear() + '/' + p2(d.getMonth()+1) + '/' + p2(d.getDate());
+}
+function fmtTime(s){
+  if (!s) return '';
+  var d = new Date(s);
+  return p2(d.getHours()) + ':' + p2(d.getMinutes());
+}
+function statBox(v, label, color){
+  return '<div class="sbox"><div class="sv" style="color:'+color+'">'+v+'</div><div class="sl">'+label+'</div></div>';
+}
+
+/* ════════════════════════════════
+   TAB SWITCHING
+   ════════════════════════════════ */
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-pane').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('pane-'+tab).classList.add('active');
+  btn.classList.add('active');
+  currentTab = tab;
+  stopAllScan();
+  if (tab === 'list')      loadEquipList();
+  if (tab === 'inventory') loadInventory();
+  if (tab === 'status')    loadStatusLog();
+}
+
+/* ════════════════════════════════
+   SUPABASE
+   ════════════════════════════════ */
+function initSupabase() {
+  var url = localStorage.getItem('sb_url');
+  var key = localStorage.getItem('sb_key');
+  if (url && key) DB = window.supabase.createClient(url, key);
+}
+
+function openSettings() {
+  document.getElementById('sbUrl').value = localStorage.getItem('sb_url') || '';
+  document.getElementById('sbKey').value = localStorage.getItem('sb_key') || '';
+  document.getElementById('dbStatus').textContent = '';
+  document.getElementById('dbStatus').style.color = '#888';
+  openModal('modalSettings');
+}
+
+async function saveSettings() {
+  var url = document.getElementById('sbUrl').value.trim();
+  var key = document.getElementById('sbKey').value.trim();
+  if (!url || !key) { toast('請填寫 URL 和 Key','warn'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  DB = window.supabase.createClient(url, key);
+  var el = document.getElementById('dbStatus');
+  el.textContent = '連線測試中…';
+  try {
+    var r = await DB.from('equipments').select('id').limit(1);
+    if (r.error) throw r.error;
+    el.textContent = '✅ 連線成功！';
+    el.style.color = '#22c55e';
+    toast('Supabase 連線成功！','success');
+  } catch(e) {
+    el.textContent = '❌ ' + e.message;
+    el.style.color = '#ef4444';
+  }
+}
+
+/* ════════════════════════════════
+   USERS
+   ════════════════════════════════ */
+function loadExtraUsers() {
+  var saved = JSON.parse(localStorage.getItem('extra_users') || '[]');
+  saved.forEach(addUserOption);
+}
+function addUserOption(name) {
+  ['checkoutUser','statusUser'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    if ([].slice.call(sel.options).find(function(o){ return o.value===name; })) return;
+    var opt = document.createElement('option');
+    opt.value = opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+function addNewUser() {
+  var name = document.getElementById('newUserName').value.trim();
+  if (!name) { toast('請輸入姓名','warn'); return; }
+  var saved = JSON.parse(localStorage.getItem('extra_users') || '[]');
+  if (!saved.includes(name)) { saved.push(name); localStorage.setItem('extra_users', JSON.stringify(saved)); }
+  addUserOption(name);
+  document.getElementById('checkoutUser').value = name;
+  document.getElementById('newUserName').value = '';
+  closeModal('modalAddUser');
+  toast('已新增：'+name,'success');
+}
+
+/* ════════════════════════════════
+   QR SCANNER
+   ════════════════════════════════ */
+async function toggleScan(divId, btnId, callback) {
+  var btn = document.getElementById(btnId);
+  var div = document.getElementById(divId);
+  if (scanActive[divId]) {
+    await stopScan(divId);
+    btn.textContent = '開始掃描';
+    div.style.display = 'none';
+    return;
+  }
+  div.style.display = 'block';
+  btn.textContent = '停止掃描';
+  try {
+    var sc = new Html5Qrcode(divId);
+    scanners[divId] = sc;
+    await sc.start(
+      { facingMode:'environment' },
+      { fps:10, qrbox:{ width:200, height:200 } },
+      function(text) {
+        callback(text);
+        stopScan(divId);
+        btn.textContent = '開始掃描';
+        div.style.display = 'none';
+      },
+      function(){}
+    );
+    scanActive[divId] = true;
+  } catch(e) {
+    toast('無法開啟相機：'+e,'error');
+    div.style.display = 'none';
+    btn.textContent = '開始掃描';
+  }
+}
+async function stopScan(divId) {
+  if (scanners[divId]) {
+    try { await scanners[divId].stop(); } catch{}
+    try { await scanners[divId].clear(); } catch{}
+    delete scanners[divId];
+  }
+  scanActive[divId] = false;
+}
+async function stopAllScan() {
+  for (var id in scanActive) {
+    if (scanActive[id]) await stopScan(id);
+  }
+  ['btnScan1','btnScan2','btnScan3'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.textContent = '開始掃描';
+  });
+  ['qr1','qr2','qr3'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+function parseQR(text) {
+  try {
+    var o = JSON.parse(text);
+    return { name: o.name||'', code: o.code||o.id||'' };
+  } catch(_) {
+    var p = text.split('|');
+    if (p.length >= 2) return { name:p[0].trim(), code:p[1].trim() };
+    return { name:text, code:'' };
+  }
+}
+
+/* ════════════════════════════════
+   TAB 1 — 今日出庫
+   ════════════════════════════════ */
+function onCheckoutScan(text) {
+  var q = parseQR(text);
+  if (!q.name) { toast('無法解析 QR Code','warn'); return; }
+  if (checkoutItems.find(function(i){ return i.code===q.code && i.name===q.name; })) {
+    toast(q.name+' 已在列表','warn'); return;
+  }
+  checkoutItems.push({ name:q.name, code:q.code, at: new Date().toISOString() });
+  renderCheckoutItems();
+  toast('✅ 已加入：'+q.name,'success');
+}
+
+function renderCheckoutItems() {
+  var c = document.getElementById('checkoutItems');
+  document.getElementById('checkoutCount').textContent = checkoutItems.length + ' 件';
+  if (!checkoutItems.length) {
+    c.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;padding:24px 0">尚未掃描任何器材</div>';
+    return;
+  }
+  c.innerHTML = checkoutItems.map(function(item, i){
+    return '<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+item.name+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:2px">#'+item.code+' · '+fmtTime(item.at)+'</div>'
+      +'</div>'
+      +'<button class="chip c-blue" style="border:none;cursor:pointer;white-space:nowrap" data-si="'+i+'">大表</button>'
+      +'<button style="width:32px;height:32px;border-radius:50%;background:#1a1a1a;border:none;color:#ef4444;cursor:pointer;font-size:16px;flex-shrink:0" data-ri="'+i+'">✕</button>'
+    +'</div>';
+  }).join('');
+  c.querySelectorAll('[data-si]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var item = checkoutItems[parseInt(btn.dataset.si)];
+      openSchedule(item.name, item.code);
+    });
+  });
+  c.querySelectorAll('[data-ri]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      checkoutItems.splice(parseInt(btn.dataset.ri),1);
+      renderCheckoutItems();
+    });
+  });
+}
+
+async function saveCheckout() {
+  var user  = document.getElementById('checkoutUser').value;
+  var date  = document.getElementById('checkoutDate').value;
+  var order = document.getElementById('checkoutOrderNo').value;
+  if (!user)               { toast('請選擇使用者','warn'); return; }
+  if (!checkoutItems.length){ toast('請先掃描器材','warn'); return; }
+  if (!DB)                 { toast('請先設定 Supabase','error'); openSettings(); return; }
+  try {
+    var rows = checkoutItems.map(function(item){
+      return { equipment_name:item.name, equipment_code:item.code,
+               user_name:user, order_no:order||null,
+               checkout_date:date, checkout_time:item.at, status:'rented' };
+    });
+    var r = await DB.from('rentals').insert(rows);
+    if (r.error) throw r.error;
+    toast('✅ 出庫儲存成功！','success');
+    checkoutItems = [];
+    renderCheckoutItems();
+  } catch(e){ toast('儲存失敗：'+e.message,'error'); }
+}
+
+async function exportPDF() {
+  var user  = document.getElementById('checkoutUser').value;
+  var date  = document.getElementById('checkoutDate').value;
+  var order = document.getElementById('checkoutOrderNo').value;
+  if (!checkoutItems.length){ toast('沒有出庫品項','warn'); return; }
+  var doc = new window.jspdf.jsPDF({ orientation:'p', unit:'mm', format:'a4' });
+  doc.setFont('helvetica'); doc.setFontSize(18);
+  doc.text('Equipment Checkout Report', 20, 25);
+  doc.setFontSize(11);
+  doc.text('User: '+(user||'-'), 20, 38);
+  doc.text('Date: '+(date||todayStr()), 20, 46);
+  doc.text('Order No: '+(order||'-'), 20, 54);
+  doc.setLineWidth(.3); doc.line(20,60,190,60);
+  var y = 70; doc.setFontSize(10);
+  checkoutItems.forEach(function(item, i){
+    doc.text((i+1)+'. '+item.name+'  #'+item.code+'  '+fmtTime(item.at), 20, y);
+    y += 9;
+  });
+  y += 14; doc.line(20,y,100,y);
+  doc.text('Signature', 20, y+7);
+  var blob = doc.output('blob');
+  var file = new File([blob], 'checkout_'+(date||todayStr())+'.pdf', { type:'application/pdf' });
+  if (navigator.canShare && navigator.canShare({ files:[file] })) {
+    try { await navigator.share({ files:[file], title:'出庫單' }); return; } catch(e){ if(e.name==='AbortError') return; }
+  }
+  doc.save(file.name);
+  toast('PDF 已下載');
+}
+
+/* ════════════════════════════════
+   SCHEDULE MODAL (大表)
+   ════════════════════════════════ */
+async function openSchedule(name, code) {
+  calEquipName = name; calEquipCode = code;
+  var now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth();
+  calRentals = [];
+  if (DB) {
+    var r = await DB.from('rentals').select('*').eq('equipment_code',code).in('status',['rented','partial']);
+    calRentals = r.data || [];
+  }
+  renderCal();
+  openModal('modalSchedule');
+}
+function changeCalMonth(d) {
+  calMonth += d;
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  renderCal();
+}
+function renderCal() {
+  var MN = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  document.getElementById('calTitle').textContent = calEquipName+' · '+calYear+'年'+MN[calMonth]+'月';
+  var grid = document.getElementById('calGrid');
+  var DN   = ['日','一','二','三','四','五','六'];
+  var html = DN.map(function(d){ return '<div style="font-size:11px;color:#888;padding:4px 0">'+d+'</div>'; }).join('');
+  var first = new Date(calYear, calMonth, 1).getDay();
+  var days  = new Date(calYear, calMonth+1, 0).getDate();
+  var today = new Date();
+  var rSet  = new Set(calRentals.map(function(r){ return (r.checkout_date||'').slice(0,10); }));
+  for (var i=0; i<first; i++) html += '<div></div>';
+  for (var d=1; d<=days; d++) {
+    var ds = calYear+'-'+p2(calMonth+1)+'-'+p2(d);
+    var cls = 'cal-day';
+    if (rSet.has(ds)) cls += ' rented';
+    if (today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d) cls += ' today';
+    html += '<div><div class="'+cls+'" data-date="'+ds+'">'+d+'</div></div>';
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.cal-day').forEach(function(el){
+    el.addEventListener('click', function(){ showDayDetail(el.dataset.date); });
+  });
+}
+function showDayDetail(ds) {
+  var recs = calRentals.filter(function(r){ return (r.checkout_date||'').slice(0,10)===ds; });
+  var el = document.getElementById('calDetail');
+  if (!recs.length) { el.innerHTML='<div style="text-align:center;color:#888;font-size:13px">'+ds+' 無借用記錄</div>'; return; }
+  el.innerHTML = '<div style="font-size:12px;color:#888;margin-bottom:6px">'+ds+' 借用記錄：</div>'
+    + recs.map(function(r){
+      return '<div class="card" style="margin-bottom:6px"><div style="font-size:14px;font-weight:500">'+r.user_name+'</div>'
+        +'<div style="font-size:11px;color:#888">單號：'+(r.order_no||'-')+'</div></div>';
+    }).join('');
+}
+
+/* ════════════════════════════════
+   TAB 2 — 器材列表
+   ════════════════════════════════ */
+async function loadEquipList() {
+  if (!DB) { renderEquipList([]); return; }
+  var r = await DB.from('equipments').select('*').order('name');
+  if (r.error) { toast('載入失敗','error'); return; }
+  allEquipments = r.data || [];
+  renderEquipList(allEquipments);
+}
+function filterEquip() {
+  var q = document.getElementById('searchEquip').value.toLowerCase();
+  renderEquipList(allEquipments.filter(function(e){
+    return e.name.toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q);
+  }));
+}
+function renderEquipList(list) {
+  var c = document.getElementById('equipmentList');
+  if (!list.length) {
+    c.innerHTML='<div style="text-align:center;color:#888;font-size:13px;padding:40px 0">暫無器材<br><span style="font-size:11px">請先設定 Supabase 或新增器材</span></div>';
+    return;
+  }
+  var SM = { repair:'c-red', rented:'c-yellow', available:'c-green', retired:'c-gray' };
+  var LM = { repair:'維修中', rented:'出租中', available:'在庫', retired:'已除役' };
+  c.innerHTML = list.map(function(e){
+    var rem = Math.max(0,(e.total_qty||0)-(e.rented_qty||0)-(e.repair_qty||0));
+    var s   = e.status||'available';
+    return '<div class="card">'
+      +'<div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:10px">'
+        +'<div><div style="font-size:14px;font-weight:600">'+e.name+'</div>'
+        +'<div style="font-size:11px;color:#888">#'+(e.code||'-')+'</div></div>'
+        +'<span class="chip '+(SM[s]||'c-gray')+'">'+(LM[s]||s)+'</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px">'
+        +statBox(e.total_qty||0,'總數','#e8e8e8')
+        +statBox(rem,'剩餘','#22c55e')
+        +statBox(e.rented_qty||0,'出租中','#f59e0b')
+        +statBox(e.repair_qty||0,'維修','#ef4444')
+      +'</div></div>';
+  }).join('');
+}
+
+/* ════════════════════════════════
+   TAB 3 — 狀態表
+   ════════════════════════════════ */
+function onStatusScan(text) {
+  var q = parseQR(text);
+  document.getElementById('statusName').value = q.name;
+  document.getElementById('statusCode').value = q.code;
+  toast('已帶入：'+q.name+' #'+q.code);
+}
+async function saveStatus() {
+  var name = document.getElementById('statusName').value;
+  var code = document.getElementById('statusCode').value;
+  var user = document.getElementById('statusUser').value;
+  var type = document.getElementById('statusType').value;
+  var date = document.getElementById('statusDate').value;
+  var note = document.getElementById('statusNote').value;
+  if (!name) { toast('請先掃描器材','warn'); return; }
+  if (!user) { toast('請選擇填寫人','warn'); return; }
+  if (!DB)   { toast('請先設定 Supabase','error'); openSettings(); return; }
+  try {
+    var r = await DB.from('status_logs').insert([{
+      equipment_name:name, equipment_code:code,
+      user_name:user, status:type, log_date:date, note:note
+    }]);
+    if (r.error) throw r.error;
+    if (type==='repair')  await DB.from('equipments').update({status:'repair'}).eq('code',code);
+    if (type==='normal')  await DB.from('equipments').update({status:'available'}).eq('code',code);
+    toast('✅ 狀態已儲存','success');
+    document.getElementById('statusName').value='';
+    document.getElementById('statusCode').value='';
+    document.getElementById('statusNote').value='';
+    loadStatusLog();
+  } catch(e){ toast('儲存失敗：'+e.message,'error'); }
+}
+async function loadStatusLog() {
+  if (!DB) return;
+  var r = await DB.from('status_logs').select('*').order('created_at',{ascending:false}).limit(20);
+  var c = document.getElementById('statusLog');
+  if (!r.data||!r.data.length){
+    c.innerHTML='<div style="text-align:center;color:#888;font-size:13px;padding:24px 0">暫無記錄</div>'; return;
+  }
+  var CM={normal:['c-green','正常'],pending:['c-yellow','未處理'],repair:['c-red','送修']};
+  c.innerHTML=r.data.map(function(rec){
+    var ci=CM[rec.status]||['c-gray',rec.status];
+    return '<div class="card" style="margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+        +'<span style="font-size:14px;font-weight:500">'+rec.equipment_name+' #'+rec.equipment_code+'</span>'
+        +'<span class="chip '+ci[0]+'">'+ci[1]+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:#888">'+rec.user_name+' · '+fmtDate(rec.log_date)+'</div>'
+      +(rec.note?'<div style="font-size:12px;color:#aaa;margin-top:6px;background:#1a1a1a;border-radius:8px;padding:6px 10px">'+rec.note+'</div>':'')
+    +'</div>';
+  }).join('');
+}
+
+/* ════════════════════════════════
+   TAB 4 — 盤點表
+   ════════════════════════════════ */
+async function loadInventory() {
+  if (!DB){
+    document.getElementById('inventoryList').innerHTML=
+      '<div style="text-align:center;color:#888;font-size:13px;padding:40px 0">請先設定 Supabase 連線</div>'; return;
+  }
+  var re = await DB.from('equipments').select('*').order('name');
+  var rr = await DB.from('rentals').select('*').eq('status','rented');
+  if (!re.data) return;
+  var rm={};
+  (rr.data||[]).forEach(function(r){
+    if(!rm[r.equipment_code])rm[r.equipment_code]=[];
+    rm[r.equipment_code].push(r);
+  });
+  var tA=0,tP=0,tO=0,tR=0;
+  var rows=re.data.map(function(e){
+    var rented=e.rented_qty||0, repair=e.repair_qty||0, total=e.total_qty||0;
+    var should=Math.max(0,total-repair-rented);
+    var ri=rm[e.code]||[];
+    tA+=total; tP+=should; tO+=rented; tR+=repair;
+    var rentedHTML=ri.map(function(r){
+      return '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;padding-left:8px;border-left:2px solid #f59e0b">'
+        +'<span style="font-size:11px;color:#f59e0b">⚙️ #'+r.equipment_code+' ('+r.user_name+') 出租中</span></div>';
+    }).join('');
+    return '<div class="card">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+        +'<div><span style="font-size:14px;font-weight:600">'+e.name+'</span>'
+        +'<span style="font-size:11px;color:#888;margin-left:6px">#'+e.code+'</span></div>'
+        +'<span class="chip c-gray" style="font-size:11px">'+should+'/'+total+'/'+repair+'</span>'
+      +'</div>'
+      +'<div style="font-size:10px;color:#888;margin-bottom:8px">應到 / 總數 / 維修</div>'
+      +'<div style="display:flex;gap:6px">'
+        +statBox(total,'總數','#e8e8e8')
+        +statBox(should,'應到','#22c55e')
+        +statBox(rented,'出租中','#f59e0b')
+        +statBox(repair,'維修','#ef4444')
+      +'</div>'+rentedHTML+'</div>';
+  });
+  document.getElementById('invTotal').textContent=tA;
+  document.getElementById('invPresent').textContent=tP;
+  document.getElementById('invOut').textContent=tO;
+  document.getElementById('invRepair').textContent=tR;
+  document.getElementById('inventoryList').innerHTML=rows.join('');
+}
+
+/* ════════════════════════════════
+   TAB 5 — 入庫
+   ════════════════════════════════ */
+function onInboundScan(text) {
+  var q = parseQR(text);
+  document.getElementById('inboundName').value = q.name;
+  document.getElementById('inboundCode').value = q.code;
+  toast('已帶入：'+q.name+' #'+q.code);
+}
+function renderInboundItems() {
+  document.getElementById('inboundCount').textContent = inboundItems.length+' 件';
+  var c = document.getElementById('inboundItems');
+  if (!inboundItems.length){
+    c.innerHTML='<div style="text-align:center;color:#888;font-size:13px;padding:16px 0">直接填寫上方欄位後按「儲存入庫」即可</div>'; return;
+  }
+  c.innerHTML=inboundItems.map(function(item,i){
+    return '<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:14px;font-weight:500">'+item.name+'</div>'
+        +'<div style="font-size:11px;color:#888">#'+item.code+' · 數量：'+item.qty+'</div>'
+      +'</div>'
+      +'<button style="width:32px;height:32px;border-radius:50%;background:#1a1a1a;border:none;color:#ef4444;cursor:pointer;font-size:16px" data-di="'+i+'">✕</button>'
+    +'</div>';
+  }).join('');
+  c.querySelectorAll('[data-di]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      inboundItems.splice(parseInt(btn.dataset.di),1); renderInboundItems();
+    });
+  });
+}
+async function saveInbound() {
+  var name = document.getElementById('inboundName').value.trim();
+  var code = document.getElementById('inboundCode').value.trim();
+  var qty  = parseInt(document.getElementById('inboundQty').value)||1;
+  var note = document.getElementById('inboundNote').value.trim();
+  var items= inboundItems.slice();
+  if (name) items.push({ name:name, code:code, qty:qty, note:note });
+  if (!items.length){ toast('請填寫器材名稱','warn'); return; }
+  if (!DB)          { toast('請先設定 Supabase','error'); openSettings(); return; }
+  try {
+    for (var i=0;i<items.length;i++){
+      var item=items[i];
+      var ex = await DB.from('equipments').select('*').eq('code',item.code).maybeSingle();
+      if (ex.data) {
+        await DB.from('equipments').update({ total_qty:(ex.data.total_qty||0)+item.qty, status:'available' }).eq('code',item.code);
+      } else {
+        await DB.from('equipments').insert([{ name:item.name, code:item.code, total_qty:item.qty, rented_qty:0, repair_qty:0, status:'available', note:item.note||null }]);
+      }
+    }
+    toast('✅ 入庫成功，共'+items.length+'筆','success');
+    inboundItems=[];
+    renderInboundItems();
+    document.getElementById('inboundName').value='';
+    document.getElementById('inboundCode').value='';
+    document.getElementById('inboundQty').value='1';
+    document.getElementById('inboundNote').value='';
+  } catch(e){ toast('入庫失敗：'+e.message,'error'); }
+}
+
+/* ════════════════════════════════
+   RETURN MODAL
+   ════════════════════════════════ */
+function openReturnModal(rental) {
+  returnTarget=rental;
+  document.getElementById('returnTitle').textContent='歸還確認：'+rental.equipment_name;
+  document.getElementById('returnMsg').textContent='借用人：'+rental.user_name+'  出庫日：'+fmtDate(rental.checkout_date);
+  openModal('modalReturn');
+}
+async function confirmReturn() {
+  if (!returnTarget) return;
+  try {
+    var r=await DB.from('rentals').update({ status:'returned', returned_at:new Date().toISOString() }).eq('id',returnTarget.id);
+    if (r.error) throw r.error;
+    toast('✅ 已標記歸還','success');
+    closeModal('modalReturn'); returnTarget=null;
+  } catch(e){ toast('操作失敗：'+e.message,'error'); }
+}
+</script>
 </body>
 </html>
