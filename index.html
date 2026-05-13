@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="器材管理" />
+  <title>攝影器材管理系統</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- html5-qrcode -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Noto Sans TC"', 'sans-serif'] },
+          colors: {
+            bg:      '#1a1a1a',
+            surface: '#242424',
+            card:    '#2e2e2e',
+            border:  '#3a3a3a',
+            muted:   '#6b6b6b',
+            subtle:  '#888888',
+            text:    '#e8e8e8',
+            accent:  '#f0a500',
+            accent2: '#3b82f6',
+            danger:  '#ef4444',
+            success: '#22c55e',
+            warn:    '#f59e0b',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Noto Sans TC', sans-serif; background: #1a1a1a; color: #e8e8e8; overscroll-behavior: none; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .nav-btn.active .nav-icon { color: #f0a500; }
+    .nav-btn.active .nav-label { color: #f0a500; }
+    .scanner-box { border: 2px solid #f0a500; border-radius: 12px; }
+    #qr-reader video { border-radius: 10px !important; }
+    #qr-reader2 video { border-radius: 10px !important; }
+    #qr-reader3 video { border-radius: 10px !important; }
+    .modal-backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+    .btn-primary { background: #f0a500; color: #1a1a1a; font-weight: 600; border-radius: 14px; padding: 14px 24px; font-size: 15px; transition: all .15s; active:opacity-80; }
+    .btn-ghost { background: #2e2e2e; color: #e8e8e8; border-radius: 14px; padding: 12px 20px; font-size: 14px; transition: all .15s; }
+    .input-field { background: #2e2e2e; border: 1.5px solid #3a3a3a; border-radius: 12px; padding: 12px 16px; color: #e8e8e8; font-size: 15px; width: 100%; outline: none; font-family: 'Noto Sans TC', sans-serif; }
+    .input-field:focus { border-color: #f0a500; }
+    select.input-field option { background: #2e2e2e; color: #e8e8e8; }
+    .card { background: #2e2e2e; border-radius: 16px; padding: 16px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .chip-green { background: rgba(34,197,94,.15); color: #22c55e; }
+    .chip-red { background: rgba(239,68,68,.15); color: #ef4444; }
+    .chip-yellow { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .chip-blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .chip-gray { background: rgba(107,107,107,.15); color: #888; }
+    .bottom-nav { background: #1e1e1e; border-top: 1px solid #2e2e2e; padding-bottom: env(safe-area-inset-bottom); }
+    .scroll-area { height: calc(100dvh - 56px - 80px); overflow-y: auto; padding: 16px 16px 8px; -webkit-overflow-scrolling: touch; }
+    .scroll-area::-webkit-scrollbar { display: none; }
+    .topbar { height: 56px; background: #1a1a1a; border-bottom: 1px solid #2e2e2e; padding: 0 16px; display: flex; align-items: center; }
+    .fab { position: fixed; bottom: 96px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #f0a500; color: #1a1a1a; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(240,165,0,.4); font-size: 24px; z-index: 40; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .slide-up { animation: slideUp .25s ease; }
+    @keyframes pulse-ring { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
+    .scanning-ring { animation: pulse-ring 1.2s infinite; }
+    .calendar-day { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .calendar-day.rented { background: rgba(240,165,0,.2); color: #f0a500; font-weight: 600; }
+    .calendar-day.today { border: 1.5px solid #f0a500; }
+    .toaster { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { background: #2e2e2e; color: #e8e8e8; padding: 10px 18px; border-radius: 12px; font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.4); border-left: 3px solid #f0a500; white-space: nowrap; }
+  </style>
+</head>
+<body class="min-h-dvh overflow-hidden">
+
+<!-- Toaster -->
+<div class="toaster" id="toaster"></div>
+
+<!-- ─── TOP BAR ─── -->
+<div class="topbar sticky top-0 z-30">
+  <span class="text-accent font-bold text-lg tracking-wide">📷 器材管理</span>
+  <div class="ml-auto flex gap-2">
+    <button onclick="openSettings()" class="w-9 h-9 rounded-full flex items-center justify-center text-subtle hover:text-text hover:bg-card transition">⚙️</button>
+  </div>
+</div>
+
+<!-- ─── TAB CONTENTS ─── -->
+<div class="scroll-area" id="mainScroll">
+
+  <!-- TAB 1: 今日出庫 -->
+  <div id="tab-checkout" class="tab-content active">
+    <div class="mb-4">
+      <h2 class="text-text font-semibold text-base mb-3">出庫資訊</h2>
+      <div class="flex flex-col gap-3">
+        <div>
+          <label class="text-subtle text-xs mb-1 block">使用者</label>
+          <div class="flex gap-2">
+            <select id="checkoutUser" class="input-field flex-1">
+              <option value="">選擇使用者</option>
+              <option>崇瑋</option><option>得生</option><option>純穎</option>
+              <option>哲嘉</option><option>子禎</option><option>錢琦</option>
+              <option>致瑋</option><option>家暉</option><option>冠智</option>
+            </select>
+            <button onclick="openAddUserModal()" class="btn-ghost px-3 text-xl">＋</button>
+          </div>
+        </div>
+        <div>
+          <label class="text-subtle text-xs mb-1 block">出租日期</label>
+          <input type="date" id="checkoutDate" class="input-field" />
+        </div>
+        <div>
+          <label class="text-subtle text-xs mb-1 block">單號</label>
+          <input type="text" id="checkoutOrderNo" placeholder="輸入單號" class="input-field" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanner -->
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-text font-medium text-sm">掃描器材 QR Code</span>
+        <button id="toggleScan1" onclick="toggleScanner('qr-reader', 'toggleScan1', handleCheckoutScan)" class="btn-primary text-sm px-4 py-2">開始掃描</button>
+      </div>
+      <div id="qr-reader" class="scanner-box overflow-hidden" style="display:none"></div>
+    </div>
+
+    <!-- Item List -->
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-text font-medium text-sm">出庫品項</span>
+        <span id="checkoutCount" class="chip chip-gray">0 件</span>
+      </div>
+      <div id="checkoutItems" class="flex flex-col gap-2"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 pb-4">
+      <button onclick="saveCheckout()" class="btn-primary flex-1">💾 儲存出庫</button>
+      <button onclick="exportCheckoutPDF()" class="btn-ghost flex-1">📄 PDF / 分享</button>
+    </div>
+  </div>
+
+  <!-- TAB 2: 器材列表 -->
+  <div id="tab-list" class="tab-content">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-text font-semibold text-base">所有器材</h2>
+      <button onclick="loadEquipmentList()" class="text-accent text-sm">重新整理</button>
+    </div>
+    <input type="text" id="searchEquip" placeholder="搜尋器材名稱…" class="input-field mb-4" oninput="filterEquipment()" />
+    <div id="equipmentList" class="flex flex-col gap-3"></div>
+  </div>
+
+  <!-- TAB 3: 器材狀態表 -->
+  <div id="tab-status" class="tab-content">
+    <h2 class="text-text font-semibold text-base mb-4">器材狀態回報</h2>
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-text font-medium text-sm">掃描器材 QR Code</span>
+        <button id="toggleScan2" onclick="toggleScanner('qr-reader2', 'toggleScan2', handleStatusScan)" class="btn-primary text-sm px-4 py-2">開始掃描</button>
+      </div>
+      <div id="qr-reader2" class="scanner-box overflow-hidden" style="display:none"></div>
+    </div>
+    <div class="flex flex-col gap-3">
+      <div>
+        <label class="text-subtle text-xs mb-1 block">器材名稱</label>
+        <input type="text" id="statusEquipName" class="input-field" placeholder="掃描後自動填入" readonly />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">編號</label>
+        <input type="text" id="statusEquipNo" class="input-field" placeholder="掃描後自動填入" readonly />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">填寫人</label>
+        <select id="statusUser" class="input-field">
+          <option value="">選擇填寫人</option>
+          <option>崇瑋</option><option>得生</option><option>純穎</option>
+          <option>哲嘉</option><option>子禎</option><option>錢琦</option>
+          <option>致瑋</option><option>家暉</option><option>冠智</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">處理狀態</label>
+        <select id="statusType" class="input-field" onchange="onStatusTypeChange()">
+          <option value="normal">正常</option>
+          <option value="pending">未處理</option>
+          <option value="repair">送修</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">日期</label>
+        <input type="date" id="statusDate" class="input-field" />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">備註</label>
+        <textarea id="statusNote" class="input-field" rows="3" placeholder="填寫備註說明…" style="resize:none"></textarea>
+      </div>
+      <button onclick="saveStatus()" class="btn-primary w-full">💾 儲存狀態</button>
+    </div>
+    <div class="mt-5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-text font-medium text-sm">近期狀態記錄</span>
+        <button onclick="loadStatusLog()" class="text-accent text-sm">重新整理</button>
+      </div>
+      <div id="statusLogList" class="flex flex-col gap-2"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 盤點表 -->
+  <div id="tab-inventory" class="tab-content">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-text font-semibold text-base">盤點總表</h2>
+      <button onclick="loadInventory()" class="text-accent text-sm">重新整理</button>
+    </div>
+    <div class="card mb-4 flex gap-4 text-center">
+      <div class="flex-1">
+        <div class="text-2xl font-bold text-accent" id="invTotal">-</div>
+        <div class="text-subtle text-xs mt-1">總數量</div>
+      </div>
+      <div class="w-px bg-border"></div>
+      <div class="flex-1">
+        <div class="text-2xl font-bold text-success" id="invPresent">-</div>
+        <div class="text-subtle text-xs mt-1">在庫</div>
+      </div>
+      <div class="w-px bg-border"></div>
+      <div class="flex-1">
+        <div class="text-2xl font-bold text-warn" id="invOut">-</div>
+        <div class="text-subtle text-xs mt-1">出租中</div>
+      </div>
+      <div class="w-px bg-border"></div>
+      <div class="flex-1">
+        <div class="text-2xl font-bold text-danger" id="invRepair">-</div>
+        <div class="text-subtle text-xs mt-1">維修中</div>
+      </div>
+    </div>
+    <div id="inventoryList" class="flex flex-col gap-3"></div>
+  </div>
+
+  <!-- TAB 5: 入庫 -->
+  <div id="tab-inbound" class="tab-content">
+    <h2 class="text-text font-semibold text-base mb-4">器材入庫</h2>
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-text font-medium text-sm">掃描器材 QR Code</span>
+        <button id="toggleScan3" onclick="toggleScanner('qr-reader3', 'toggleScan3', handleInboundScan)" class="btn-primary text-sm px-4 py-2">開始掃描</button>
+      </div>
+      <div id="qr-reader3" class="scanner-box overflow-hidden" style="display:none"></div>
+    </div>
+    <div class="flex flex-col gap-3 mb-4">
+      <div>
+        <label class="text-subtle text-xs mb-1 block">器材名稱</label>
+        <input type="text" id="inboundName" class="input-field" placeholder="掃描後自動填入或手動輸入" />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">器材編號</label>
+        <input type="text" id="inboundCode" class="input-field" placeholder="如：A-001" />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">入庫數量</label>
+        <input type="number" id="inboundQty" class="input-field" placeholder="1" value="1" min="1" />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">備註</label>
+        <input type="text" id="inboundNote" class="input-field" placeholder="選填備註" />
+      </div>
+    </div>
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-text font-medium text-sm">本次入庫品項</span>
+        <span id="inboundCount" class="chip chip-gray">0 件</span>
+      </div>
+      <div id="inboundItems" class="flex flex-col gap-2"></div>
+    </div>
+    <button onclick="saveInbound()" class="btn-primary w-full">💾 儲存入庫</button>
+  </div>
+
+</div><!-- end scroll-area -->
+
+<!-- ─── BOTTOM NAV ─── -->
+<div class="bottom-nav fixed bottom-0 left-0 right-0 z-30">
+  <div class="flex">
+    <button class="nav-btn active flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('checkout', this)">
+      <span class="nav-icon text-xl">📤</span>
+      <span class="nav-label text-[10px] text-subtle font-medium">今日出庫</span>
+    </button>
+    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('list', this)">
+      <span class="nav-icon text-xl">📋</span>
+      <span class="nav-label text-[10px] text-subtle font-medium">器材列表</span>
+    </button>
+    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('status', this)">
+      <span class="nav-icon text-xl">🔧</span>
+      <span class="nav-label text-[10px] text-subtle font-medium">狀態表</span>
+    </button>
+    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('inventory', this)">
+      <span class="nav-icon text-xl">📊</span>
+      <span class="nav-label text-[10px] text-subtle font-medium">盤點表</span>
+    </button>
+    <button class="nav-btn flex-1 flex flex-col items-center py-3 gap-0.5" onclick="switchTab('inbound', this)">
+      <span class="nav-icon text-xl">📥</span>
+      <span class="nav-label text-[10px] text-subtle font-medium">入庫</span>
+    </button>
+  </div>
+</div>
+
+<!-- ─── MODALS ─── -->
+
+<!-- Schedule Modal -->
+<div id="scheduleModal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('scheduleModal')"></div>
+  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up" style="max-height:80dvh;overflow-y:auto">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
+    <div class="flex items-center justify-between mb-4">
+      <button onclick="changeCalMonth(-1)" class="w-9 h-9 rounded-full bg-card flex items-center justify-center text-text">‹</button>
+      <span id="calTitle" class="text-text font-semibold"></span>
+      <button onclick="changeCalMonth(1)" class="w-9 h-9 rounded-full bg-card flex items-center justify-center text-text">›</button>
+    </div>
+    <div id="calGrid" class="grid grid-cols-7 gap-1 mb-4 text-center"></div>
+    <div id="scheduleDetail" class="mt-2"></div>
+    <button onclick="closeModal('scheduleModal')" class="btn-ghost w-full mt-4">關閉</button>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div id="addUserModal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('addUserModal')"></div>
+  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
+    <h3 class="text-text font-semibold mb-4">新增使用者</h3>
+    <input type="text" id="newUserName" class="input-field mb-4" placeholder="輸入姓名" />
+    <div class="flex gap-3">
+      <button onclick="closeModal('addUserModal')" class="btn-ghost flex-1">取消</button>
+      <button onclick="addNewUser()" class="btn-primary flex-1">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('settingsModal')"></div>
+  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
+    <h3 class="text-text font-semibold mb-4">⚙️ Supabase 設定</h3>
+    <div class="flex flex-col gap-3">
+      <div>
+        <label class="text-subtle text-xs mb-1 block">Supabase URL</label>
+        <input type="text" id="sbUrl" class="input-field" placeholder="https://xxxx.supabase.co" />
+      </div>
+      <div>
+        <label class="text-subtle text-xs mb-1 block">Supabase Anon Key</label>
+        <input type="text" id="sbKey" class="input-field" placeholder="eyJ..." />
+      </div>
+      <button onclick="saveSettings()" class="btn-primary w-full">儲存並連線</button>
+      <div id="dbStatus" class="text-center text-sm text-subtle"></div>
+    </div>
+    <div class="mt-4 p-3 bg-card rounded-xl">
+      <p class="text-subtle text-xs leading-5">請先至 <span class="text-accent">supabase.com</span> 建立專案，然後執行 <span class="text-accent">schema.sql</span> 建立資料表，再填入連線資訊。</p>
+    </div>
+    <button onclick="closeModal('settingsModal')" class="btn-ghost w-full mt-3">關閉</button>
+  </div>
+</div>
+
+<!-- Confirm Return Modal -->
+<div id="returnModal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop absolute inset-0"></div>
+  <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl p-5 slide-up">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
+    <h3 class="text-text font-semibold mb-2" id="returnModalTitle">確認歸還</h3>
+    <p class="text-subtle text-sm mb-4" id="returnModalMsg"></p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('returnModal')" class="btn-ghost flex-1">取消</button>
+      <button onclick="confirmReturn()" class="btn-primary flex-1">確認歸還</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
