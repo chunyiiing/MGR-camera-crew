@@ -23,7 +23,7 @@
   -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 input,textarea,select{-webkit-user-select:auto;user-select:auto;}
 body{margin:0;font-family:'Noto Sans TC',sans-serif;background:#1a1a1a;color:#e8e8e8;
-  overscroll-behavior:none;touch-action:pan-y; min-height: 100vh;}
+  overscroll-behavior:none;touch-action:pan-y;}
 
 /* ── layout ── */
 .topbar{position:fixed;top:0;left:0;right:0;height:50px;background:#1a1a1a;
@@ -31,25 +31,12 @@ body{margin:0;font-family:'Noto Sans TC',sans-serif;background:#1a1a1a;color:#e8
 .scroll-area{position:fixed;top:50px;bottom:68px;left:0;right:0;
   overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;}
 .scroll-area::-webkit-scrollbar{display:none;}
-
-/* 修改：固定底部選單不亂跑 */
-.bottom-nav{
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 68px;
-  background: #1e1e1e;
-  border-top: 1px solid #2e2e2e;
-  display: flex;
-  z-index: 999;
-  padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#1e1e1e;
+  border-top:1px solid #2e2e2e;padding-bottom:env(safe-area-inset-bottom);z-index:100;display:flex;}
 
 /* ── tabs ── */
 .tab-pane{display:none;}.tab-pane.active{display:block;}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 0;gap:1px;
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0;gap:1px;
   background:none;border:none;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
 .nav-btn .ni{font-size:18px;line-height:1;}
 .nav-btn .nl{font-size:9px;color:#555;font-weight:500;}
@@ -154,17 +141,11 @@ label.lbl{display:block;font-size:11px;color:#888;margin-bottom:4px;}
 </style>
 </head>
 <body>
-<!-- 修改：新增預覽文字 -->
-<div style="background:#f0a500; color:#1a1a1a; text-align:center; font-size:13px; font-weight:bold; padding:2px 0;">
-  嗨嗨～～測試中呦👻
-</div>
-
 <div id="toaster"></div>
 
 <!-- ══ TOP BAR ══ -->
 <div class="topbar">
-  <!-- 修改：變更標題文字 -->
-  <span style="color:#f0a500;font-weight:700;font-size:15px;flex-shrink:0">📷 MGR攝影組器材管理</span>
+  <span style="color:#f0a500;font-weight:700;font-size:15px;flex-shrink:0">📷 器材管理</span>
   <span id="topBadge" class="status-badge" style="display:none"></span>
   <div style="margin-left:auto;display:flex;gap:6px;flex-shrink:0">
     <button id="btnSettings" style="width:36px;height:36px;border-radius:50%;background:#2e2e2e;border:none;
@@ -173,7 +154,7 @@ label.lbl{display:block;font-size:11px;color:#888;margin-bottom:4px;}
 </div>
 
 <div class="scroll-area">
-<!-- 剩餘內容不准改，保持與原代碼一致 -->
+
 <!-- ═══ PANE: 今日出庫 ═══ -->
 <div id="pane-checkout" class="tab-pane active">
   <div class="card" style="padding:10px 12px;margin-bottom:8px">
@@ -198,6 +179,7 @@ label.lbl{display:block;font-size:11px;color:#888;margin-bottom:4px;}
     </div>
   </div>
 
+  <!-- scanner -->
   <div class="card" style="padding:10px 12px;margin-bottom:8px">
     <div class="row" style="align-items:center;margin-bottom:8px">
       <span style="font-size:13px;font-weight:500;flex:1">掃描器材 QR</span>
@@ -221,11 +203,128 @@ label.lbl{display:block;font-size:11px;color:#888;margin-bottom:4px;}
   </div>
 </div>
 
-<!-- 此處省略中間其餘 pane 內容以節省空間，但完整代碼中必須包含 -->
-<!-- [PANE: 儲存成功], [PANE: 租單列表], [PANE: 器材列表], [PANE: 狀態表], [PANE: 盤點表], [PANE: 入庫] 應完整保留 -->
+<!-- ═══ PANE: 儲存成功 ═══ -->
+<div id="pane-saved" class="tab-pane">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <span class="chip c-orange" style="font-size:13px;padding:4px 12px">✅ 出庫成功</span>
+    <span id="savedTitle" style="font-size:14px;font-weight:600;flex:1"></span>
+  </div>
+  <div class="card" style="margin-bottom:10px">
+    <div id="savedMeta" style="font-size:12px;color:#aaa;line-height:2"></div>
+  </div>
+  <div id="savedList" style="margin-bottom:10px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <button id="btnCopyLine"    class="btn btn-dark" style="flex:1;min-width:140px">📋 複製 LINE 清單</button>
+    <button id="btnSavedPDF"    class="btn btn-dark" style="flex:1;min-width:100px">📄 PDF</button>
+    <button id="btnNewCheckout" class="btn btn-gold" style="flex:1;min-width:120px">＋ 新增出庫</button>
+  </div>
+</div>
 
-<!-- 由於用戶要求除了指定三項外不准改，此處略過中間 HTML 直至底部導航 -->
-<!-- ... -->
+<!-- ═══ PANE: 租單列表 ═══ -->
+<div id="pane-rentals" class="tab-pane">
+  <div class="row" style="align-items:center;margin-bottom:10px">
+    <span class="sec-title" style="flex:1">📋 出租中單號</span>
+    <button id="btnRefreshRentals" style="background:none;border:none;color:#f0a500;font-size:12px;cursor:pointer">重新整理</button>
+  </div>
+  <div id="rentalsList"></div>
+</div>
+
+<!-- ═══ PANE: 器材列表 ═══ -->
+<div id="pane-list" class="tab-pane">
+  <div class="row" style="align-items:center;margin-bottom:8px">
+    <span class="sec-title" style="flex:1">所有器材</span>
+    <button id="btnRefreshList" style="background:none;border:none;color:#f0a500;font-size:12px;cursor:pointer">重新整理</button>
+  </div>
+  <input type="text" id="searchEquip" class="inp" style="margin-bottom:8px" placeholder="搜尋器材名稱…"/>
+  <div id="equipmentList"></div>
+</div>
+
+<!-- ═══ PANE: 狀態表 ═══ -->
+<div id="pane-status" class="tab-pane">
+  <div class="row" style="align-items:center;margin-bottom:10px">
+    <span class="sec-title" style="flex:1">🔧 維修中器材</span>
+    <button id="btnOpenRepairForm" class="btn btn-gold btn-sm">＋ 回報維修</button>
+  </div>
+  <div id="repairCurrentList"></div>
+
+  <!-- repair form (hidden by default) -->
+  <div id="repairFormArea" style="display:none;margin-top:12px">
+    <div class="card">
+      <div class="row" style="align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:500;flex:1">掃描器材 QR</span>
+        <button id="btnScan2" class="btn btn-gold btn-sm">開始掃描</button>
+      </div>
+      <div id="qr2" class="scan-box">
+        <div class="scan-focus-hint">點擊畫面對焦</div>
+      </div>
+    </div>
+    <div class="card">
+      <label class="lbl">器材名稱（可自行輸入）</label>
+      <input id="statusName" class="inp gap" placeholder="掃描後自動填入"/>
+      <label class="lbl">編號</label>
+      <input id="statusCode" class="inp gap" placeholder="掃描後自動填入"/>
+      <label class="lbl">填寫人</label>
+      <select id="statusUser" class="inp gap">
+        <option value="">選擇填寫人</option>
+        <option>崇瑋</option><option>得生</option><option>純穎</option>
+        <option>哲嘉</option><option>子禎</option><option>錢琦</option>
+        <option>致瑋</option><option>家暉</option><option>冠智</option>
+      </select>
+      <label class="lbl">日期</label>
+      <input type="date" id="statusDate" class="inp gap"/>
+      <label class="lbl">備註</label>
+      <textarea id="statusNote" class="inp" rows="2" style="margin-bottom:10px" placeholder="填寫備註…"></textarea>
+      <div class="row">
+        <button id="btnCancelRepairForm" class="btn btn-dark">取消</button>
+        <button id="btnSaveStatus"       class="btn btn-gold">💾 送出維修回報</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANE: 盤點表 ═══ -->
+<div id="pane-inventory" class="tab-pane">
+  <div class="row" style="align-items:center;margin-bottom:10px">
+    <span class="sec-title" style="flex:1">📊 盤點表</span>
+    <button id="btnRefreshInv" style="background:none;border:none;color:#f0a500;font-size:12px;cursor:pointer">重新整理</button>
+  </div>
+  <div id="inventoryList"></div>
+</div>
+
+<!-- ═══ PANE: 入庫 ═══ -->
+<div id="pane-inbound" class="tab-pane">
+  <p class="sec-title">器材入庫</p>
+  <div class="card" style="padding:10px 12px;margin-bottom:8px">
+    <div class="row" style="align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:500;flex:1">掃描 QR Code</span>
+      <button id="btnScan3" class="btn btn-gold btn-sm">開始掃描</button>
+    </div>
+    <div id="qr3" class="scan-box">
+      <div class="scan-focus-hint">點擊畫面對焦</div>
+    </div>
+  </div>
+  <div class="card">
+    <label class="lbl">分類</label>
+    <div class="row gap" style="align-items:center">
+      <select id="inboundCat" class="inp" style="flex:1"></select>
+      <button id="btnAddCat" class="btn btn-dark btn-sm" style="flex-shrink:0">＋</button>
+    </div>
+    <label class="lbl">器材名稱</label>
+    <input id="inboundName" class="inp gap" placeholder="掃描自動填入 / 手動輸入"/>
+    <label class="lbl">起始編號（留空自動從 001）</label>
+    <input id="inboundStartCode" class="inp gap" placeholder="如 001"/>
+    <label class="lbl">入庫數量（多件自動流水號）</label>
+    <input type="number" id="inboundQty" class="inp gap" value="1" min="1"/>
+    <label class="lbl">備註</label>
+    <input id="inboundNote" class="inp" style="margin-bottom:10px" placeholder="選填"/>
+    <button id="btnSaveInbound" class="btn btn-gold">💾 儲存入庫</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 5px">
+    <span style="font-size:13px;font-weight:500">本次儲存品項</span>
+    <span id="inboundCount" class="chip c-gray">0 件</span>
+  </div>
+  <div id="inboundSavedList"></div>
+</div>
 
 </div><!-- /scroll-area -->
 
@@ -239,8 +338,1110 @@ label.lbl{display:block;font-size:11px;color:#888;margin-bottom:4px;}
   <button class="nav-btn"        data-tab="inbound"> <span class="ni">📥</span><span class="nl">入庫</span></button>
 </div>
 
-<!-- 剩餘 Modals 與 JS 邏輯均不變，完整保留 -->
-<!-- ... -->
+<!-- ══ MODALS ══ -->
+<!-- Settings -->
+<div id="modalSettings" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p style="font-size:15px;font-weight:600;margin:0 0 12px">⚙️ Supabase 設定</p>
+    <label class="lbl">Project URL</label>
+    <input id="sbUrl" class="inp gap" placeholder="https://xxxx.supabase.co"/>
+    <label class="lbl">Anon Key</label>
+    <input id="sbKey" class="inp" style="margin-bottom:10px" placeholder="eyJ…"/>
+    <button id="btnSaveSettings" class="btn btn-gold" style="margin-bottom:8px">儲存並測試連線</button>
+    <div id="dbStatus" style="text-align:center;font-size:12px;color:#888;min-height:18px;margin-bottom:10px"></div>
+    <div style="background:#2e2e2e;border-radius:11px;padding:10px 12px;margin-bottom:10px">
+      <p style="margin:0;font-size:11px;color:#888;line-height:1.8">
+        ① supabase.com 建立專案<br>
+        ② SQL Editor 執行 schema.sql<br>
+        ③ Settings→API 複製 URL 和 anon key
+      </p>
+    </div>
+    <div style="margin-bottom:10px">
+      <label class="lbl">高亮關鍵字（逗號分隔）</label>
+      <input id="kwInput" class="inp" placeholder="如：A7IV,5D,ALEXA"/>
+    </div>
+    <button id="btnSaveKw"       class="btn btn-dark" style="margin-bottom:6px">儲存關鍵字</button>
+    <button id="btnCloseSettings" class="btn btn-dark">關閉</button>
+  </div>
+</div>
+<!-- Add User -->
+<div id="modalAddUser" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p style="font-size:15px;font-weight:600;margin:0 0 12px">新增使用者</p>
+    <input id="newUserName" class="inp" style="margin-bottom:12px" placeholder="輸入姓名"/>
+    <div class="row">
+      <button id="btnCancelUser"  class="btn btn-dark">取消</button>
+      <button id="btnConfirmUser" class="btn btn-gold">新增</button>
+    </div>
+  </div>
+</div>
+<!-- Add Category -->
+<div id="modalAddCat" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p style="font-size:15px;font-weight:600;margin:0 0 12px">新增分類</p>
+    <input id="newCatName" class="inp" style="margin-bottom:12px" placeholder="輸入分類名稱"/>
+    <div class="row">
+      <button id="btnCancelCat"  class="btn btn-dark">取消</button>
+      <button id="btnConfirmCat" class="btn btn-gold">新增</button>
+    </div>
+  </div>
+</div>
+<!-- Schedule -->
+<div id="modalSchedule" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="row" style="align-items:center;margin-bottom:12px">
+      <button id="btnCalPrev" style="width:34px;height:34px;border-radius:50%;background:#2e2e2e;border:none;color:#e8e8e8;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">‹</button>
+      <span id="calTitle" style="flex:1;text-align:center;font-size:14px;font-weight:600"></span>
+      <button id="btnCalNext" style="width:34px;height:34px;border-radius:50%;background:#2e2e2e;border:none;color:#e8e8e8;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+    <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;margin-bottom:10px"></div>
+    <div id="calDetail" style="margin-bottom:10px"></div>
+    <button id="btnCloseSchedule" class="btn btn-dark">關閉</button>
+  </div>
+</div>
+<!-- Confirm -->
+<div id="modalConfirm" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p id="confirmTitle" style="font-size:15px;font-weight:600;margin:0 0 6px"></p>
+    <p id="confirmMsg"   style="font-size:13px;color:#888;margin:0 0 18px"></p>
+    <div class="row">
+      <button id="btnConfirmNo"  class="btn btn-dark">否</button>
+      <button id="btnConfirmYes" class="btn btn-red">是，刪除</button>
+    </div>
+  </div>
+</div>
+<!-- Rental Detail -->
+<div id="modalRental" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p id="rentalDetailTitle" style="font-size:15px;font-weight:600;margin:0 0 4px"></p>
+    <p id="rentalDetailMeta"  style="font-size:12px;color:#888;margin:0 0 12px"></p>
+    <div id="rentalDetailItems" style="margin-bottom:12px"></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+      <button id="btnScanReturn"  class="btn btn-dark" style="flex:1;min-width:120px">📷 掃描歸還</button>
+      <button id="btnReturnAll"   class="btn btn-gold" style="flex:1;min-width:120px">✅ 一鍵全數歸還</button>
+    </div>
+    <div id="qrReturn" class="scan-box" style="margin-top:8px">
+      <div class="scan-focus-hint">點擊畫面對焦</div>
+    </div>
+    <button id="btnCloseRental" class="btn btn-dark" style="margin-top:10px">關閉</button>
+  </div>
+</div>
+<!-- Monthly Check -->
+<div id="modalMonthly" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p id="monthlyTitle" style="font-size:15px;font-weight:600;margin:0 0 4px"></p>
+    <p style="font-size:12px;color:#888;margin:0 0 10px">點選月份標記已點檢</p>
+    <div id="monthlyGrid" class="month-grid"></div>
+    <button id="btnCloseMonthly" class="btn btn-dark" style="margin-top:14px">完成</button>
+  </div>
+</div>
+<!-- Edit Equip -->
+<div id="modalEditEquip" class="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+    <p style="font-size:15px;font-weight:600;margin:0 0 12px">修改器材</p>
+    <input type="hidden" id="editEquipId"/>
+    <label class="lbl">器材名稱</label>
+    <input id="editEquipName" class="inp gap"/>
+    <label class="lbl">分類</label>
+    <select id="editEquipCat" class="inp gap"></select>
+    <label class="lbl">總數量</label>
+    <input type="number" id="editEquipQty" class="inp gap" min="0"/>
+    <div class="row">
+      <button id="btnCancelEditEquip"  class="btn btn-dark">取消</button>
+      <button id="btnConfirmEditEquip" class="btn btn-gold">儲存</button>
+    </div>
+  </div>
+</div>
 
+<!-- ════════════════════ JS ════════════════════ -->
+<script>
+/* ── globals ── */
+var DB=null, currentTab='checkout';
+var checkoutItems=[], inboundSaved=[], allEquipments=[];
+var calYear,calMonth,calEquipName,calEquipCode,calRentals=[];
+var confirmCb=null;
+var currentRentalOrders=[], activeRentalOrder=null;
+var scanners={},scanActive={};
+var monthlyEquipName='', monthlyEquipCode='';
+var lastSavedData=null;
+
+var DEFAULT_CATS=['攝影機','記憶存儲設備','輔材','鏡頭','跟焦器','光斗','濾鏡','配件','電腦硬碟','移動器材','電池/充電'];
+
+function getCats(){
+  var ex=JSON.parse(localStorage.getItem('extra_cats')||'[]');
+  var all=DEFAULT_CATS.slice();
+  ex.forEach(function(c){if(!all.includes(c))all.push(c);});
+  return all;
+}
+function getKws(){ return (localStorage.getItem('highlight_kw')||'').split(',').map(function(s){return s.trim();}).filter(Boolean); }
+
+/* ════════ BOOT ════════ */
+window.addEventListener('DOMContentLoaded',function(){
+  initSupabase(); loadExtraUsers(); populateCatSelects();
+  setDefaultDates(); renderCheckoutItems(); renderInboundSaved();
+  wireButtons(); refreshTopBadge();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+});
+function setDefaultDates(){
+  document.getElementById('checkoutDate').value=todayStr();
+  document.getElementById('statusDate').value=todayStr();
+}
+
+/* ════════ WIRE ════════ */
+function wireButtons(){
+  on('btnSettings',       openSettings);
+  on('btnSaveSettings',   saveSettings);
+  on('btnCloseSettings',  function(){closeModal('modalSettings');});
+  on('btnSaveKw',         saveKw);
+  on('btnAddUser',        function(){openModal('modalAddUser');});
+  on('btnConfirmUser',    addNewUser);
+  on('btnCancelUser',     function(){closeModal('modalAddUser');});
+  on('btnAddCat',         function(){openModal('modalAddCat');});
+  on('btnConfirmCat',     addNewCat);
+  on('btnCancelCat',      function(){closeModal('modalAddCat');});
+
+  on('btnScan1',          function(){toggleScan('qr1','btnScan1',onCheckoutScan);});
+  on('btnSaveCheckout',   saveCheckout);
+  on('btnExportPDF',      function(){exportPDF(lastSavedData||buildCheckoutData());});
+  on('btnCopyLine',       copyLineList);
+  on('btnSavedPDF',       function(){if(lastSavedData)exportPDF(lastSavedData);});
+  on('btnNewCheckout',    function(){switchTab('checkout',document.querySelector('[data-tab="checkout"]'));});
+
+  on('btnRefreshRentals', loadRentals);
+  on('btnRefreshList',    loadEquipList);
+  on('searchEquip',       filterEquip,'input');
+
+  on('btnOpenRepairForm', openRepairForm);
+  on('btnCancelRepairForm',closeRepairForm);
+  on('btnScan2',          function(){toggleScan('qr2','btnScan2',onStatusScan);});
+  on('btnSaveStatus',     saveStatus);
+
+  on('btnRefreshInv',     loadInventory);
+  on('btnScan3',          function(){toggleScan('qr3','btnScan3',onInboundScan);});
+  on('btnSaveInbound',    saveInbound);
+
+  on('btnCalPrev',        function(){changeCalMonth(-1);});
+  on('btnCalNext',        function(){changeCalMonth(1);});
+  on('btnCloseSchedule',  function(){closeModal('modalSchedule');});
+
+  on('btnConfirmNo',      function(){closeModal('modalConfirm');});
+  on('btnConfirmYes',     function(){if(confirmCb){confirmCb();closeModal('modalConfirm');}});
+
+  on('btnScanReturn',     function(){toggleScan('qrReturn','btnScanReturn',onReturnScan);});
+  on('btnReturnAll',      returnAll);
+  on('btnCloseRental',    function(){closeModal('modalRental');stopScan('qrReturn');});
+  on('btnCloseMonthly',   function(){closeModal('modalMonthly');});
+
+  on('btnCancelEditEquip',  function(){closeModal('modalEditEquip');});
+  on('btnConfirmEditEquip', confirmEditEquip);
+
+  on('topBadge',          function(){switchTab('rentals',document.querySelector('[data-tab="rentals"]'));});
+
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){switchTab(btn.dataset.tab,btn);});
+  });
+  ['modalSettings','modalAddUser','modalAddCat','modalSchedule','modalConfirm','modalRental','modalMonthly','modalEditEquip'].forEach(function(id){
+    document.getElementById(id).addEventListener('click',function(e){
+      if(e.target===document.getElementById(id))closeModal(id);
+    });
+  });
+
+  // scanner click-to-focus
+  ['qr1','qr2','qr3','qrReturn'].forEach(function(id){
+    document.getElementById(id).addEventListener('click',function(){
+      var vid=document.querySelector('#'+id+' video');
+      if(vid&&vid.srcObject){
+        var tracks=vid.srcObject.getVideoTracks();
+        tracks.forEach(function(t){
+          try{t.applyConstraints({focusMode:'auto'});}catch(e){}
+        });
+      }
+    });
+  });
+}
+function on(id,fn,evt){var el=document.getElementById(id);if(el)el.addEventListener(evt||'click',fn);}
+
+/* ════════ MODAL / TOAST ════════ */
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg,type){
+  var el=document.createElement('div');el.className='toast';
+  if(type==='err')  el.classList.add('t-err');
+  if(type==='warn') el.classList.add('t-warn');
+  if(type==='ok')   el.classList.add('t-ok');
+  el.textContent=msg;
+  document.getElementById('toaster').appendChild(el);
+  setTimeout(function(){el.remove();},3000);
+}
+function confirm2(title,msg,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  confirmCb=cb; openModal('modalConfirm');
+}
+function vibrate(ms){try{navigator.vibrate&&navigator.vibrate(ms||150);}catch(e){}}
+
+/* ════════ HELPERS ════════ */
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function p2(n){return String(n).padStart(2,'0');}
+function p3(n){return String(n).padStart(3,'0');}
+function fmtDate(s){if(!s)return'';var d=new Date(s);return d.getFullYear()+'/'+p2(d.getMonth()+1)+'/'+p2(d.getDate());}
+function fmtTime(s){if(!s)return'';var d=new Date(s);return p2(d.getHours())+':'+p2(d.getMinutes());}
+function addDays(s,n){var d=new Date(s);d.setDate(d.getDate()+n);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function statBox(v,label,color){return '<div class="sbox"><div class="sv" style="color:'+color+'">'+v+'</div><div class="sl">'+label+'</div></div>';}
+
+/* ── keyword highlight ── */
+function hlName(name){
+  var kws=getKws(); if(!kws.length)return escHtml(name);
+  var result=escHtml(name);
+  kws.forEach(function(kw){
+    if(!kw)return;
+    var re=new RegExp('('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+    result=result.replace(re,'<span class="kw">$1</span>');
+  });
+  return result;
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ── QR parse: "0000#002" → name=0000, code=002 ── */
+function parseQR(text){
+  text=text.trim();
+  // format: NAME#CODE
+  if(text.includes('#')){
+    var parts=text.split('#');
+    return {name:parts[0].trim(),code:parts.slice(1).join('#').trim()};
+  }
+  // JSON
+  try{var o=JSON.parse(text);return{name:o.name||'',code:o.code||o.id||''};}catch(_){}
+  // pipe
+  var p=text.split('|');
+  if(p.length>=2)return{name:p[0].trim(),code:p[1].trim()};
+  return{name:text,code:''};
+}
+
+/* ════════ TABS ════════ */
+function switchTab(tab,btn){
+  document.getElementById('pane-saved').classList.remove('active');
+  document.querySelectorAll('.tab-pane').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('pane-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
+  currentTab=tab;
+  stopAllScan();
+  if(tab==='list')     loadEquipList();
+  if(tab==='inventory')loadInventory();
+  if(tab==='status')   loadRepairCurrent();
+  if(tab==='rentals')  loadRentals();
+}
+
+/* ════════ SUPABASE ════════ */
+function initSupabase(){
+  var url=localStorage.getItem('sb_url'),key=localStorage.getItem('sb_key');
+  if(url&&key)DB=window.supabase.createClient(url,key);
+}
+function openSettings(){
+  document.getElementById('sbUrl').value=localStorage.getItem('sb_url')||'';
+  document.getElementById('sbKey').value=localStorage.getItem('sb_key')||'';
+  document.getElementById('kwInput').value=localStorage.getItem('highlight_kw')||'';
+  document.getElementById('dbStatus').textContent='';
+  openModal('modalSettings');
+}
+async function saveSettings(){
+  var url=document.getElementById('sbUrl').value.trim();
+  var key=document.getElementById('sbKey').value.trim();
+  if(!url||!key){toast('請填寫 URL 和 Key','warn');return;}
+  localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
+  DB=window.supabase.createClient(url,key);
+  var el=document.getElementById('dbStatus');el.textContent='連線測試中…';
+  try{
+    var r=await DB.from('equipments').select('id').limit(1);
+    if(r.error)throw r.error;
+    el.textContent='✅ 連線成功！';el.style.color='#22c55e';
+    toast('連線成功！','ok');
+  }catch(e){el.textContent='❌ '+e.message;el.style.color='#ef4444';}
+}
+function saveKw(){
+  localStorage.setItem('highlight_kw',document.getElementById('kwInput').value);
+  toast('關鍵字已儲存','ok');closeModal('modalSettings');
+}
+
+/* ════════ CATEGORIES ════════ */
+function populateCatSelects(){
+  var cats=getCats();
+  ['inboundCat','editEquipCat'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    sel.innerHTML=cats.map(function(c){return'<option value="'+c+'">'+c+'</option>';}).join('');
+  });
+}
+function addNewCat(){
+  var name=document.getElementById('newCatName').value.trim();
+  if(!name){toast('請輸入名稱','warn');return;}
+  var ex=JSON.parse(localStorage.getItem('extra_cats')||'[]');
+  if(!ex.includes(name)&&!DEFAULT_CATS.includes(name)){ex.push(name);localStorage.setItem('extra_cats',JSON.stringify(ex));}
+  populateCatSelects();
+  document.getElementById('inboundCat').value=name;
+  document.getElementById('newCatName').value='';
+  closeModal('modalAddCat');toast('已新增分類：'+name,'ok');
+}
+
+/* ════════ USERS ════════ */
+function loadExtraUsers(){
+  JSON.parse(localStorage.getItem('extra_users')||'[]').forEach(addUserOption);
+}
+function addUserOption(name){
+  ['checkoutUser','statusUser'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    if([].slice.call(sel.options).find(function(o){return o.value===name;}))return;
+    var opt=document.createElement('option');opt.value=opt.textContent=name;sel.appendChild(opt);
+  });
+}
+function addNewUser(){
+  var name=document.getElementById('newUserName').value.trim();
+  if(!name){toast('請輸入姓名','warn');return;}
+  var saved=JSON.parse(localStorage.getItem('extra_users')||'[]');
+  if(!saved.includes(name)){saved.push(name);localStorage.setItem('extra_users',JSON.stringify(saved));}
+  addUserOption(name);
+  document.getElementById('checkoutUser').value=name;
+  document.getElementById('newUserName').value='';
+  closeModal('modalAddUser');toast('已新增：'+name,'ok');
+}
+
+/* ════════ SCANNER ════════ */
+var SCAN_CONFIG={fps:30,qrbox:{width:220,height:220},aspectRatio:1.0,experimentalFeatures:{useBarCodeDetectorIfSupported:true}};
+
+async function toggleScan(divId,btnId,cb){
+  var btn=document.getElementById(btnId),div=document.getElementById(divId);
+  if(scanActive[divId]){await stopScan(divId);btn.textContent='開始掃描';div.style.display='none';return;}
+  div.style.display='block';btn.textContent='停止掃描';
+  try{
+    var sc=new Html5Qrcode(divId);scanners[divId]=sc;
+    await sc.start({facingMode:'environment'},SCAN_CONFIG,
+      function(text){cb(text);stopScan(divId);btn.textContent='開始掃描';div.style.display='none';},
+      function(){}
+    );
+    scanActive[divId]=true;
+  }catch(e){toast('無法開啟相機：'+e,'err');div.style.display='none';btn.textContent='開始掃描';}
+}
+async function stopScan(divId){
+  if(scanners[divId]){try{await scanners[divId].stop();}catch{}try{await scanners[divId].clear();}catch{}delete scanners[divId];}
+  scanActive[divId]=false;
+}
+async function stopAllScan(){
+  for(var id in scanActive){if(scanActive[id])await stopScan(id);}
+  ['btnScan1','btnScan2','btnScan3','btnScanReturn'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.textContent='開始掃描';
+  });
+  ['qr1','qr2','qr3','qrReturn'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.style.display='none';
+  });
+}
+
+/* ════════ TAB 1 – 出庫 ════════ */
+async function onCheckoutScan(text){
+  var q=parseQR(text);
+  if(!q.name){toast('無法解析','warn');return;}
+
+  // repair check
+  if(DB){
+    var chk=await DB.from('equipments').select('status').eq('code',q.code).maybeSingle();
+    if(chk.data&&chk.data.status==='repair'){
+      document.getElementById('repairWarn').style.display='block';
+      vibrate([100,50,100]);
+      toast('⛔ 器材維修中：'+q.name,'err');return;
+    }
+  }
+  document.getElementById('repairWarn').style.display='none';
+
+  if(checkoutItems.find(function(i){return i.code===q.code&&i.name===q.name;})){
+    vibrate(200);toast('⚠️ 已在清單中：'+q.name,'warn');return;
+  }
+  checkoutItems.push({name:q.name,code:q.code,at:new Date().toISOString()});
+  renderCheckoutItems();toast('✅ 已加入：'+q.name,'ok');
+}
+
+function renderCheckoutItems(){
+  var c=document.getElementById('checkoutItems');
+  document.getElementById('checkoutCount').textContent=checkoutItems.length+' 件';
+  if(!checkoutItems.length){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:16px 0">尚未掃描任何器材</div>';return;}
+  c.innerHTML=checkoutItems.map(function(item,i){
+    return '<div class="card" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+hlName(item.name)+'</div>'
+        +'<div style="font-size:10px;color:#888;margin-top:1px">#'+item.code+' · '+fmtTime(item.at)+'</div>'
+      +'</div>'
+      +'<button class="chip c-blue" style="border:none;cursor:pointer;white-space:nowrap;flex-shrink:0;font-size:11px" data-si="'+i+'">大表</button>'
+      +'<button style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;border:none;color:#ef4444;cursor:pointer;font-size:14px;flex-shrink:0" data-ri="'+i+'">✕</button>'
+    +'</div>';
+  }).join('');
+  c.querySelectorAll('[data-si]').forEach(function(btn){
+    btn.addEventListener('click',function(){var item=checkoutItems[+btn.dataset.si];openSchedule(item.name,item.code);});
+  });
+  c.querySelectorAll('[data-ri]').forEach(function(btn){
+    btn.addEventListener('click',function(){checkoutItems.splice(+btn.dataset.ri,1);renderCheckoutItems();});
+  });
+}
+
+function buildCheckoutData(){
+  return{user:document.getElementById('checkoutUser').value,
+    date:document.getElementById('checkoutDate').value,
+    orderNo:document.getElementById('checkoutOrderNo').value,
+    items:checkoutItems.slice()};
+}
+
+async function saveCheckout(){
+  var user=document.getElementById('checkoutUser').value;
+  var date=document.getElementById('checkoutDate').value;
+  var order=document.getElementById('checkoutOrderNo').value;
+  if(!user){toast('請選擇使用者','warn');return;}
+  if(!checkoutItems.length){toast('請先掃描器材','warn');return;}
+  var data=buildCheckoutData();
+  if(DB){
+    try{
+      var rows=checkoutItems.map(function(item){
+        return{equipment_name:item.name,equipment_code:item.code,user_name:user,
+          order_no:order||null,checkout_date:date,checkout_time:item.at,status:'rented'};
+      });
+      var r=await DB.from('rentals').insert(rows);
+      if(r.error)throw r.error;
+      // update equipment status
+      for(var i=0;i<checkoutItems.length;i++){
+        await DB.from('equipments').update({status:'rented'}).eq('code',checkoutItems[i].code);
+      }
+    }catch(e){toast('DB警告：'+e.message,'warn');}
+  }
+  lastSavedData=data;
+  checkoutItems=[];
+  renderCheckoutItems();
+  refreshTopBadge();
+  showSavedPane(data);
+}
+
+function showSavedPane(data){
+  document.querySelectorAll('.tab-pane').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('pane-saved').classList.add('active');
+  document.getElementById('savedTitle').textContent=(data.orderNo||'出庫單')+' · '+fmtDate(data.date);
+  document.getElementById('savedMeta').innerHTML=
+    '借用人：<b style="color:#e8e8e8">'+data.user+'</b><br>'
+    +'出租日期：<b style="color:#e8e8e8">'+fmtDate(data.date)+'</b><br>'
+    +'單號：<b style="color:#e8e8e8">'+(data.orderNo||'—')+'</b>';
+  document.getElementById('savedList').innerHTML=data.items.map(function(item){
+    return '<div class="card" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +'<span class="chip c-orange" style="flex-shrink:0;font-size:10px">出租中</span>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:500">'+hlName(item.name)+'</div>'
+        +'<div style="font-size:10px;color:#888">#'+item.code+' · '+fmtTime(item.at)+'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function copyLineList(){
+  if(!lastSavedData){toast('無資料','warn');return;}
+  var d=lastSavedData;
+  var lines=['【出庫單】','單號：'+(d.orderNo||'—'),'借用人：'+d.user,'日期：'+fmtDate(d.date),''];
+  d.items.forEach(function(item,i){lines.push((i+1)+'. '+item.name+' #'+item.code);});
+  lines.push('','請確認收到以上器材，謝謝！');
+  var text=lines.join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){toast('已複製！可貼入 LINE','ok');}).catch(function(){fallbackCopy(text);});
+  }else{fallbackCopy(text);}
+}
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('已複製','ok');}catch(e){toast('複製失敗，請手動複製','err');}
+  document.body.removeChild(ta);
+}
+
+/* ── top badge ── */
+async function refreshTopBadge(){
+  var badge=document.getElementById('topBadge');
+  if(!DB){badge.style.display='none';return;}
+  var r=await DB.from('rentals').select('order_no',{distinct:true}).eq('status','rented');
+  var orders=r.data?[...new Set(r.data.map(function(x){return x.order_no;}).filter(Boolean))]:[];
+  if(!orders.length){badge.style.display='none';}
+  else{badge.style.display='inline-flex';badge.textContent=orders.length+'件 出租中 ▸';}
+}
+
+/* ════════ RENTAL ORDERS ════════ */
+async function loadRentals(){
+  var c=document.getElementById('rentalsList');
+  if(!DB){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:20px 0">請先設定 Supabase</div>';return;}
+  var r=await DB.from('rentals').select('*').eq('status','rented').order('checkout_date',{ascending:false});
+  var data=r.data||[];
+  if(!data.length){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:24px 0">✅ 目前無出租中器材</div>';return;}
+  // group by order_no
+  var groups={};
+  data.forEach(function(row){
+    var key=row.order_no||('__no_order__'+row.user_name);
+    if(!groups[key]){groups[key]={orderNo:row.order_no,user:row.user_name,date:row.checkout_date,items:[]};}
+    groups[key].items.push(row);
+  });
+  currentRentalOrders=Object.values(groups);
+  c.innerHTML=currentRentalOrders.map(function(g,i){
+    return '<div class="card" style="cursor:pointer" data-rental-idx="'+i+'">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span class="chip c-orange">出租中</span>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:14px;font-weight:600">'+(g.orderNo||'（無單號）')+'</div>'
+          +'<div style="font-size:11px;color:#888">'+g.user+' · '+fmtDate(g.date)+' · '+g.items.length+'件</div>'
+        +'</div>'
+        +'<span style="color:#888;font-size:18px">›</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  c.querySelectorAll('[data-rental-idx]').forEach(function(el){
+    el.addEventListener('click',function(){openRentalDetail(currentRentalOrders[+el.dataset.rentalIdx]);});
+  });
+}
+
+function openRentalDetail(g){
+  activeRentalOrder=g;
+  document.getElementById('rentalDetailTitle').textContent=(g.orderNo||'（無單號）');
+  document.getElementById('rentalDetailMeta').textContent=g.user+' · '+fmtDate(g.date)+' · '+g.items.length+'件';
+  renderRentalDetailItems(g.items);
+  openModal('modalRental');
+}
+function renderRentalDetailItems(items){
+  document.getElementById('rentalDetailItems').innerHTML=items.map(function(item){
+    return '<div class="card" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:500">'+hlName(item.equipment_name)+'</div>'
+        +'<div style="font-size:10px;color:#888">#'+item.equipment_code+'</div></div>'
+      +'<span class="chip c-yellow">未歸還</span>'
+    +'</div>';
+  }).join('');
+}
+async function onReturnScan(text){
+  var q=parseQR(text);
+  if(!activeRentalOrder||!DB)return;
+  var match=activeRentalOrder.items.find(function(i){return i.equipment_code===q.code||i.equipment_name===q.name;});
+  if(!match){toast('此器材不在本單','warn');return;}
+  await DB.from('rentals').update({status:'returned',returned_at:new Date().toISOString()}).eq('id',match.id);
+  await DB.from('equipments').update({status:'available'}).eq('code',match.equipment_code);
+  activeRentalOrder.items=activeRentalOrder.items.filter(function(i){return i.id!==match.id;});
+  renderRentalDetailItems(activeRentalOrder.items);
+  toast('✅ 已歸還：'+q.name,'ok');
+  if(!activeRentalOrder.items.length){closeModal('modalRental');loadRentals();refreshTopBadge();}
+}
+async function returnAll(){
+  if(!activeRentalOrder||!DB)return;
+  for(var i=0;i<activeRentalOrder.items.length;i++){
+    var it=activeRentalOrder.items[i];
+    await DB.from('rentals').update({status:'returned',returned_at:new Date().toISOString()}).eq('id',it.id);
+    await DB.from('equipments').update({status:'available'}).eq('code',it.equipment_code);
+  }
+  toast('✅ 全數歸還完成','ok');
+  closeModal('modalRental');loadRentals();refreshTopBadge();
+}
+
+/* ════════ SCHEDULE MODAL ════════ */
+async function openSchedule(name,code){
+  calEquipName=name;calEquipCode=code;
+  var now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();calRentals=[];
+  if(DB){var r=await DB.from('rentals').select('*').eq('equipment_code',code).in('status',['rented','returned']);calRentals=r.data||[];}
+  renderCal();openModal('modalSchedule');
+}
+function changeCalMonth(d){calMonth+=d;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+function renderCal(){
+  var MN=['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  document.getElementById('calTitle').textContent=calEquipName+' · '+calYear+'年'+MN[calMonth]+'月';
+  var grid=document.getElementById('calGrid');
+  var DN=['日','一','二','三','四','五','六'];
+  var html=DN.map(function(d){return'<div style="font-size:10px;color:#888;padding:3px 0">'+d+'</div>';}).join('');
+  var first=new Date(calYear,calMonth,1).getDay(),days=new Date(calYear,calMonth+1,0).getDate();
+  var today=new Date();
+  var rSet=new Set(calRentals.map(function(r){return(r.checkout_date||'').slice(0,10);}));
+  for(var i=0;i<first;i++)html+='<div></div>';
+  for(var d=1;d<=days;d++){
+    var ds=calYear+'-'+p2(calMonth+1)+'-'+p2(d);
+    var cls='cal-day';
+    if(rSet.has(ds))cls+=' rented';
+    if(today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d)cls+=' today';
+    html+='<div><div class="'+cls+'" data-date="'+ds+'">'+d+'</div></div>';
+  }
+  grid.innerHTML=html;
+  grid.querySelectorAll('.cal-day').forEach(function(el){el.addEventListener('click',function(){showDayDetail(el.dataset.date);});});
+}
+function showDayDetail(ds){
+  var recs=calRentals.filter(function(r){return(r.checkout_date||'').slice(0,10)===ds;});
+  var el=document.getElementById('calDetail');
+  if(!recs.length){el.innerHTML='<div style="text-align:center;color:#888;font-size:12px">'+ds+' 無記錄</div>';return;}
+  el.innerHTML='<div style="font-size:11px;color:#888;margin-bottom:5px">'+ds+'：</div>'
+    +recs.map(function(r){return'<div class="card" style="margin-bottom:5px"><div style="font-size:13px;font-weight:500">'+r.user_name+'</div><div style="font-size:11px;color:#888">單號：'+(r.order_no||'-')+'</div></div>';}).join('');
+}
+
+/* ════════ TAB: 器材列表 ════════ */
+async function loadEquipList(){
+  if(!DB){renderEquipList([]);return;}
+  var r=await DB.from('equipments').select('*').order('category').order('name').order('code');
+  if(r.error){toast('載入失敗','err');return;}
+  allEquipments=r.data||[];renderEquipList(allEquipments);
+}
+function filterEquip(){
+  var q=document.getElementById('searchEquip').value.toLowerCase();
+  renderEquipList(allEquipments.filter(function(e){return e.name.toLowerCase().includes(q)||(e.code||'').toLowerCase().includes(q);}));
+}
+function renderEquipList(list){
+  var c=document.getElementById('equipmentList');
+  if(!list.length){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:30px 0">暫無器材<br><span style="font-size:10px">請先入庫器材</span></div>';return;}
+
+  // Group: category → name → [items]
+  var catMap={};
+  list.forEach(function(e){
+    var cat=e.category||'其他';
+    if(!catMap[cat])catMap[cat]={};
+    var nm=e.name;
+    if(!catMap[cat][nm])catMap[cat][nm]=[];
+    catMap[cat][nm].push(e);
+  });
+
+  var cats=getCats().concat(['其他']);
+  var html='';
+  cats.forEach(function(cat){
+    if(!catMap[cat])return;
+    html+='<div class="cat-hd">'+cat+'</div>';
+    Object.keys(catMap[cat]).forEach(function(nm){
+      var items=catMap[cat][nm];
+      // merged row
+      var codes=items.map(function(x){return'#'+(x.code||'?');}).join(' ');
+      var totalQ=items.reduce(function(s,x){return s+(x.total_qty||0);},0);
+      var repairQ=items.filter(function(x){return x.status==='repair';}).length;
+      var rentedQ=items.filter(function(x){return x.status==='rented';}).length;
+      var availQ=Math.max(0,totalQ-repairQ-rentedQ);
+      var repStr=repairQ>0?'<span class="chip c-red" style="font-size:10px;margin-left:4px">'+repairQ+'維修</span>':'';
+      var rentStr=rentedQ>0?'<span class="chip c-yellow" style="font-size:10px;margin-left:4px">'+rentedQ+'出租</span>':'';
+
+      html+='<div class="sw-wrap" data-name="'+escHtml(nm)+'" data-cat="'+cat+'">'
+        +'<div class="sw-actions"><button class="sw-del" data-del-name="'+escHtml(nm)+'" data-del-cat="'+cat+'">刪除</button></div>'
+        +'<div class="sw-card">'
+          +'<div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:6px">'
+            +'<div style="flex:1;min-width:0">'
+              +'<div style="font-size:13px;font-weight:600">'+hlName(nm)+repStr+rentStr+'</div>'
+              +'<div style="font-size:10px;color:#888;margin-top:2px">數量：'+totalQ+' · '+codes+'</div>'
+            +'</div>'
+            +'<button class="chip c-blue" style="border:none;cursor:pointer;font-size:10px;flex-shrink:0" '
+              +'data-edit-name="'+escHtml(nm)+'" data-edit-cat="'+cat+'">修改</button>'
+          +'</div>'
+          +'<div style="display:flex;gap:5px">'
+            +statBox(totalQ,'總數','#e8e8e8')
+            +statBox(availQ,'在庫','#22c55e')
+            +statBox(rentedQ,'出租中','#f59e0b')
+            +statBox(repairQ,'維修','#ef4444')
+          +'</div>'
+        +'</div>'
+      +'</div>';
+    });
+  });
+  c.innerHTML=html;
+  bindEquipEvents(c);
+}
+
+function bindEquipEvents(c){
+  // swipe & long-press
+  c.querySelectorAll('.sw-wrap').forEach(function(wrap){
+    var card=wrap.querySelector('.sw-card');
+    var startX=0,startT=0,lpTimer=null;
+    card.addEventListener('touchstart',function(e){
+      startX=e.touches[0].clientX;startT=Date.now();
+      lpTimer=setTimeout(function(){
+        card.style.transform='translateX(-72px)';
+      },600);
+    },{passive:true});
+    card.addEventListener('touchmove',function(e){
+      clearTimeout(lpTimer);
+      var dx=e.touches[0].clientX-startX;
+      if(dx<0)card.style.transform='translateX('+Math.max(dx,-72)+'px)';
+      else card.style.transform='';
+    },{passive:true});
+    card.addEventListener('touchend',function(e){
+      clearTimeout(lpTimer);
+      var dx=e.changedTouches[0].clientX-startX;
+      if(dx<-40)card.style.transform='translateX(-72px)';
+      else if(dx>10)card.style.transform='';
+    });
+    // click outside to close
+    card.addEventListener('click',function(){card.style.transform='';});
+  });
+
+  // delete
+  c.querySelectorAll('.sw-del').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var name=btn.dataset.delName,cat=btn.dataset.delCat;
+      var items=allEquipments.filter(function(x){return x.name===name&&(x.category||'其他')===cat;});
+      confirm2('刪除器材','確定刪除「'+name+'」所有 '+items.length+' 件？刪除後盤點數量同步扣除。',async function(){
+        if(!DB){toast('請先設定 Supabase','err');return;}
+        for(var i=0;i<items.length;i++){
+          await DB.from('equipments').delete().eq('id',items[i].id);
+        }
+        toast('已刪除：'+name,'ok');loadEquipList();
+      });
+    });
+  });
+
+  // edit
+  c.querySelectorAll('[data-edit-name]').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var name=btn.dataset.editName,cat=btn.dataset.editCat;
+      var items=allEquipments.filter(function(x){return x.name===name&&(x.category||'其他')===cat;});
+      if(!items.length)return;
+      document.getElementById('editEquipId').value=items.map(function(x){return x.id;}).join(',');
+      document.getElementById('editEquipName').value=name;
+      populateCatSelects();
+      document.getElementById('editEquipCat').value=cat;
+      document.getElementById('editEquipQty').value=items.reduce(function(s,x){return s+(x.total_qty||0);},0);
+      openModal('modalEditEquip');
+    });
+  });
+}
+
+async function confirmEditEquip(){
+  var ids=document.getElementById('editEquipId').value.split(',');
+  var name=document.getElementById('editEquipName').value.trim();
+  var cat=document.getElementById('editEquipCat').value;
+  var qty=parseInt(document.getElementById('editEquipQty').value)||0;
+  if(!name){toast('請填寫名稱','warn');return;}
+  if(!DB){toast('請先設定 Supabase','err');return;}
+  // update name & category for all ids; distribute qty
+  var perItem=Math.max(1,Math.floor(qty/ids.length));
+  for(var i=0;i<ids.length;i++){
+    await DB.from('equipments').update({name:name,category:cat,total_qty:perItem}).eq('id',ids[i]);
+  }
+  toast('已更新','ok');closeModal('modalEditEquip');loadEquipList();
+}
+
+/* ════════ TAB: 狀態表 / 維修 ════════ */
+function openRepairForm(){
+  document.getElementById('repairFormArea').style.display='block';
+  document.getElementById('btnOpenRepairForm').style.display='none';
+}
+function closeRepairForm(){
+  document.getElementById('repairFormArea').style.display='none';
+  document.getElementById('btnOpenRepairForm').style.display='';
+}
+function onStatusScan(text){
+  var q=parseQR(text);
+  document.getElementById('statusName').value=q.name;
+  document.getElementById('statusCode').value=q.code;
+  toast('已帶入：'+q.name,'ok');
+}
+
+async function saveStatus(){
+  var name=document.getElementById('statusName').value.trim();
+  var code=document.getElementById('statusCode').value.trim();
+  var user=document.getElementById('statusUser').value;
+  var date=document.getElementById('statusDate').value;
+  var note=document.getElementById('statusNote').value;
+  if(!name){toast('請填寫器材名稱','warn');return;}
+  if(!user){toast('請選擇填寫人','warn');return;}
+  if(!DB){toast('請先設定 Supabase','err');openSettings();return;}
+  try{
+    // 1. insert status log
+    var r=await DB.from('status_logs').insert([{
+      equipment_name:name,equipment_code:code,user_name:user,
+      status:'repair',log_date:date,note:note
+    }]);
+    if(r.error)throw r.error;
+
+    // 2. ★ sync equipment status → 'repair'  (FIX for repair count bug)
+    if(code){
+      await DB.from('equipments').update({status:'repair'}).eq('code',code);
+    }else{
+      // match by name if no code
+      await DB.from('equipments').update({status:'repair'}).eq('name',name);
+    }
+
+    toast('✅ 維修回報已儲存','ok');
+    document.getElementById('statusName').value='';
+    document.getElementById('statusCode').value='';
+    document.getElementById('statusNote').value='';
+    closeRepairForm();
+    loadRepairCurrent();
+  }catch(e){toast('儲存失敗：'+e.message,'err');}
+}
+
+/* ★ repair count: count from equipments.status='repair' directly */
+async function loadRepairCurrent(){
+  var c=document.getElementById('repairCurrentList');
+  if(!DB){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:20px 0">請先設定 Supabase</div>';return;}
+
+  // Query equipments with status='repair'  ← single source of truth
+  var r=await DB.from('equipments').select('*').eq('status','repair');
+  var items=r.data||[];
+
+  if(!items.length){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:20px 0">✅ 目前無維修中器材</div>';return;}
+
+  c.innerHTML=items.map(function(e){
+    return '<div class="card" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:600">'+hlName(e.name)+'</div>'
+        +'<div style="font-size:10px;color:#888">#'+(e.code||'—')+'</div>'
+      +'</div>'
+      +'<span class="chip c-red">維修中</span>'
+      +'<button style="padding:5px 10px;background:#22c55e;color:#1a1a1a;border:none;border-radius:8px;'
+        +'font-size:11px;font-weight:600;cursor:pointer;font-family:\'Noto Sans TC\',sans-serif" data-recover-id="'+e.id+'" data-recover-name="'+escHtml(e.name)+'">已修好</button>'
+    +'</div>';
+  }).join('');
+
+  c.querySelectorAll('[data-recover-id]').forEach(function(btn){
+    btn.addEventListener('click',async function(){
+      var id=btn.dataset.recoverId,name=btn.dataset.recoverName;
+      await DB.from('equipments').update({status:'available'}).eq('id',id);
+      toast('✅ 已標記修復：'+name,'ok');
+      loadRepairCurrent();loadInventory();
+    });
+  });
+}
+
+/* ════════ TAB: 盤點表 ════════ */
+async function loadInventory(){
+  var c=document.getElementById('inventoryList');
+  if(!DB){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:30px 0">請先設定 Supabase</div>';return;}
+
+  var re=await DB.from('equipments').select('*').order('category').order('name');
+  var rr=await DB.from('rentals').select('equipment_code').eq('status','rented');
+  if(!re.data)return;
+
+  // rental codes set
+  var rentedCodes=new Set((rr.data||[]).map(function(x){return x.equipment_code;}));
+
+  // group by category → name
+  var catMap={};
+  re.data.forEach(function(e){
+    var cat=e.category||'其他';
+    if(!catMap[cat])catMap[cat]={};
+    if(!catMap[cat][e.name])catMap[cat][e.name]=[];
+    catMap[cat][e.name].push(e);
+  });
+
+  var cats=getCats().concat(['其他']);
+  var html='';
+  cats.forEach(function(cat){
+    if(!catMap[cat])return;
+    html+='<div style="margin-bottom:16px"><div class="cat-hd">'+cat+'</div>';
+    Object.keys(catMap[cat]).forEach(function(nm){
+      var items=catMap[cat][nm];
+      var total=items.length; // each db row = 1 physical unit
+      // ★ count from equipments.status directly (consistent with repair screen)
+      var repairCnt=items.filter(function(x){return x.status==='repair';}).length;
+      var rentedCnt=items.filter(function(x){return x.status==='rented';}).length;
+      // also cross-check rental table
+      var rentedCntAlt=items.filter(function(x){return rentedCodes.has(x.code);}).length;
+      rentedCnt=Math.max(rentedCnt,rentedCntAlt);
+      var inStock=Math.max(0,total-repairCnt-rentedCnt);
+
+      // anomaly: inStock should equal items with status=available
+      var availCnt=items.filter(function(x){return x.status==='available';}).length;
+      var anomaly=(availCnt!==inStock);
+
+      var codes=items.map(function(x){return'#'+(x.code||'?');}).join(' ');
+      // monthly check data
+      var monthly=JSON.parse(localStorage.getItem('monthly_'+cat+'_'+nm)||'{}');
+      var checkedMonths=Object.keys(monthly).filter(function(m){return monthly[m];}).length;
+
+      html+='<div class="card" style="margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'
+          +'<div style="flex:1;min-width:0">'
+            +'<div style="font-size:13px;font-weight:600">'+hlName(nm)+'</div>'
+            +'<div style="font-size:10px;color:#888;margin-top:1px">'+codes+'</div>'
+          +'</div>'
+          +'<span class="chip c-gray" style="font-size:10px">'+inStock+'/'+total+'/'+repairCnt+'</span>'
+        +'</div>'
+        +'<div style="font-size:9px;color:#888;margin-bottom:5px">應到 / 總數 / 維修</div>'
+        +'<div style="display:flex;gap:4px;margin-bottom:6px">'
+          +statBox(total,'總數','#e8e8e8')
+          +statBox(inStock,'應到','#22c55e')
+          +statBox(rentedCnt,'出租中','#f59e0b')
+          +statBox(repairCnt,'維修','#ef4444')
+        +'</div>'
+        +'<div style="display:flex;gap:6px;align-items:center">'
+          +(anomaly?'<button class="btn btn-red btn-sm" style="font-size:10px" data-anomaly-name="'+escHtml(nm)+'">⚠️ 異常回報</button>':'')
+          +'<button class="btn btn-dark btn-sm" style="font-size:10px;flex:1" data-monthly-name="'+escHtml(nm)+'" data-monthly-cat="'+cat+'">'
+            +'📅 月份點檢 ('+(checkedMonths?checkedMonths:'0')+'/12)'
+          +'</button>'
+        +'</div>'
+      +'</div>';
+    });
+    html+='</div>';
+  });
+
+  c.innerHTML=html||'<div style="text-align:center;color:#888;font-size:12px;padding:30px 0">暫無器材資料</div>';
+
+  // anomaly buttons
+  c.querySelectorAll('[data-anomaly-name]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.getElementById('statusName').value=btn.dataset.anomalyName;
+      switchTab('status',document.querySelector('[data-tab="status"]'));
+      openRepairForm();
+    });
+  });
+
+  // monthly check buttons
+  c.querySelectorAll('[data-monthly-name]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      monthlyEquipName=btn.dataset.monthlyName;
+      monthlyEquipCat=btn.dataset.monthlyCat;
+      openMonthlyModal(monthlyEquipName,monthlyEquipCat);
+    });
+  });
+}
+
+/* ════════ MONTHLY CHECK ════════ */
+var monthlyEquipCat='';
+function openMonthlyModal(name,cat){
+  document.getElementById('monthlyTitle').textContent='月份點檢：'+name;
+  var key='monthly_'+cat+'_'+name;
+  var data=JSON.parse(localStorage.getItem(key)||'{}');
+  var months=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('monthlyGrid').innerHTML=months.map(function(m,i){
+    var checked=data[i+1];
+    return'<div class="month-cell'+(checked?' checked':'')+'" data-mi="'+(i+1)+'">'+m+(checked?' ✓':'')+'</div>';
+  }).join('');
+  document.getElementById('monthlyGrid').querySelectorAll('.month-cell').forEach(function(el){
+    el.addEventListener('click',function(){
+      var mi=+el.dataset.mi;
+      data[mi]=!data[mi];
+      localStorage.setItem(key,JSON.stringify(data));
+      el.classList.toggle('checked',!!data[mi]);
+      el.textContent=months[mi-1]+(data[mi]?' ✓':'');
+    });
+  });
+  openModal('modalMonthly');
+}
+
+/* ════════ TAB: 入庫 ════════ */
+function onInboundScan(text){
+  var q=parseQR(text);
+  document.getElementById('inboundName').value=q.name;
+  document.getElementById('inboundStartCode').value=q.code;
+  toast('已帶入：'+q.name,'ok');
+}
+function renderInboundSaved(){
+  document.getElementById('inboundCount').textContent=inboundSaved.length+' 件';
+  var c=document.getElementById('inboundSavedList');
+  if(!inboundSaved.length){c.innerHTML='<div style="text-align:center;color:#888;font-size:12px;padding:14px 0">本次尚未儲存品項</div>';return;}
+  c.innerHTML=inboundSaved.map(function(item,i){
+    return'<div class="card" style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:500">'+hlName(item.name)+'</div>'
+        +'<div style="font-size:10px;color:#888">分類：'+item.cat+' · #'+item.code+'</div>'
+      +'</div>'
+      +'<button style="width:26px;height:26px;border-radius:50%;background:#1a1a1a;border:none;color:#ef4444;cursor:pointer;font-size:13px;flex-shrink:0" data-del-ib="'+i+'">✕</button>'
+    +'</div>';
+  }).join('');
+  c.querySelectorAll('[data-del-ib]').forEach(function(btn){
+    btn.addEventListener('click',function(){inboundSaved.splice(+btn.dataset.delIb,1);renderInboundSaved();});
+  });
+}
+
+async function saveInbound(){
+  var name=document.getElementById('inboundName').value.trim();
+  var startCodeRaw=document.getElementById('inboundStartCode').value.trim();
+  var qty=parseInt(document.getElementById('inboundQty').value)||1;
+  var note=document.getElementById('inboundNote').value.trim();
+  var cat=document.getElementById('inboundCat').value;
+  if(!name){toast('請填寫器材名稱','warn');return;}
+  if(!DB){toast('請先設定 Supabase','err');openSettings();return;}
+
+  // Auto sequence: startCode or 001
+  var startNum=parseInt(startCodeRaw)||1;
+
+  // find existing max code for this name to avoid collision
+  var existing=await DB.from('equipments').select('code').eq('name',name);
+  var existingNums=(existing.data||[]).map(function(e){
+    return parseInt((e.code||'0').replace(/\D/g,''))||0;
+  });
+  if(existingNums.length){
+    var maxExist=Math.max.apply(null,existingNums);
+    if(startNum<=maxExist) startNum=maxExist+1; // avoid dup
+  }
+
+  try{
+    var newRows=[];
+    for(var i=0;i<qty;i++){
+      var codeNum=startNum+i;
+      var code=p3(codeNum);
+      var r=await DB.from('equipments').insert([{
+        name:name,code:code,total_qty:1,rented_qty:0,repair_qty:0,
+        status:'available',category:cat,note:note||null
+      }]);
+      if(r.error)throw r.error;
+      newRows.push({name:name,code:code,cat:cat});
+      inboundSaved.push({name:name,code:code,cat:cat,qty:1,note:note});
+    }
+    renderInboundSaved();
+    document.getElementById('inboundName').value='';
+    document.getElementById('inboundStartCode').value='';
+    document.getElementById('inboundQty').value='1';
+    document.getElementById('inboundNote').value='';
+    toast('✅ 入庫 '+qty+' 件：'+name+' #'+p3(startNum)+(qty>1?'~#'+p3(startNum+qty-1):''),'ok');
+  }catch(e){toast('入庫失敗：'+e.message,'err');}
+}
+
+/* ════════ PDF ════════ */
+async function exportPDF(data){
+  if(!data||!data.items||!data.items.length){toast('沒有出庫品項','warn');return;}
+  var returnDate=addDays(data.date||todayStr(),1);
+  var rows=data.items.map(function(item,i){
+    return'<tr style="border-bottom:1px solid #eee">'
+      +'<td style="padding:7px 6px;font-size:12px;color:#333">'+(i+1)+'</td>'
+      +'<td style="padding:7px 6px;font-size:13px;font-weight:600;color:#1a1a1a">'+escHtml(item.name)+'</td>'
+      +'<td style="padding:7px 6px;font-size:12px;color:#555">#'+escHtml(item.code)+'</td>'
+      +'<td style="padding:7px 6px;font-size:11px;color:#777">'+fmtTime(item.at)+'</td>'
+    +'</tr>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"/>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet"/>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Noto Sans TC",sans-serif;background:#fff;color:#1a1a1a;padding:28px 24px;}'
+    +'.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;border-bottom:3px solid #f0a500;padding-bottom:14px;}'
+    +'.logo{font-size:20px;font-weight:700;}.logo span{color:#f0a500;}'
+    +'.badge{background:#f0a500;color:#1a1a1a;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;}'
+    +'.meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:20px;padding:14px;background:#f9f9f9;border-radius:9px;border-left:4px solid #f0a500;}'
+    +'.ml{font-size:9px;color:#888;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}'
+    +'.mv{font-size:14px;font-weight:600;color:#1a1a1a;}'
+    +'table{width:100%;border-collapse:collapse;}thead tr{background:#1a1a1a;}thead th{padding:9px 6px;font-size:11px;color:#fff;text-align:left;}'
+    +'tbody tr:nth-child(even){background:#fafafa;}'
+    +'.sign{margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:36px;}'
+    +'.sb{border-top:1.5px solid #ccc;padding-top:6px;font-size:10px;color:#888;}'
+    +'@media print{body{padding:14px;}}</style></head><body>'
+    +'<div class="hd"><div><div class="logo">📷 <span>攝影器材管理</span></div>'
+    +'<div style="font-size:11px;color:#888;margin-top:3px">器材出庫單</div></div>'
+    +'<div class="badge">出租中</div></div>'
+    +'<div class="meta">'
+    +'<div><div class="ml">借用人</div><div class="mv">'+(data.user||'—')+'</div></div>'
+    +'<div><div class="ml">單號</div><div class="mv">'+(data.orderNo||'—')+'</div></div>'
+    +'<div><div class="ml">出租日期</div><div class="mv">'+fmtDate(data.date)+'</div></div>'
+    +'<div><div class="ml">預計歸還</div><div class="mv">'+fmtDate(returnDate)+'</div></div>'
+    +'</div>'
+    +'<table><thead><tr><th style="width:30px">#</th><th>器材名稱</th><th>編號</th><th>掃描時間</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div class="sign">'
+    +'<div class="sb">借用人簽名 / '+(data.user||'')+'</div>'
+    +'<div class="sb">管理員簽名</div>'
+    +'</div>'
+    +'<div style="margin-top:28px;font-size:10px;color:#bbb;text-align:center">出庫時間：'+new Date().toLocaleString('zh-TW')+'</div>'
+    +'</body></html>';
+
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var fname=(data.orderNo||data.user||'checkout')+'_'+returnDate+'.html';
+  var file=new File([blob],fname,{type:'text/html'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'出庫單'});return;}catch(e){if(e.name==='AbortError')return;}
+  }
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fname;a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},3000);
+  toast('已下載出庫單（用瀏覽器列印為PDF）');
+}
+</script>
 </body>
 </html>
